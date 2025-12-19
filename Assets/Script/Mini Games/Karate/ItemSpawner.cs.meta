@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 56e9fae3177d4d246bc237f01d04e4df
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - woodPrefab: {fileID: 7109087283286163015, guid: 361cc43c5bc825540965a600288a35c2, type: 3}
+  - stonePrefab: {fileID: 1262390774684530684, guid: 78e45a94ca6215e44a4feb357a8be819, type: 3}
+  - karateTable: {fileID: 7474990357491450566, guid: f9cf87a703b9dc249a9715f2afa088f7, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
