@@ -25,13 +25,16 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        if (EasyModeManager.Instance != null)
+        currentSlices = 0;
+        gameEnded = false;
+
+        if (GameModeManager.Instance != null)
             timer = timeLimit;
     }
 
     void Update()
     {
-        if (gameEnded || EasyModeManager.Instance == null) return;
+        if (gameEnded || GameModeManager.Instance == null) return;
 
         timer -= Time.deltaTime;
 
@@ -51,8 +54,10 @@ public class GameManager : MonoBehaviour
 
     void WinGame()
     {
+        if (gameEnded) return;
+
         gameEnded = true;
-        EasyModeManager.Instance.MinigameCompleted();
+        GameModeManager.Instance.MinigameCompleted();
     }
 
     public void LoseGame()
@@ -60,6 +65,12 @@ public class GameManager : MonoBehaviour
         if (gameEnded) return;
 
         gameEnded = true;
-        EasyModeManager.Instance.MinigameFailed();
+        GameModeManager.Instance.MinigameFailed();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 }

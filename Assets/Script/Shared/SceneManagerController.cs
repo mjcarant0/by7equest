@@ -26,6 +26,6 @@ public class SceneManagerController : MonoBehaviour
     // Function to load the game
     public void StartGame()
     {
-        SceneManager.LoadScene("EasyModeBootstrap");
+        SceneManager.LoadScene("GameModeBootstrap");
     }
 }

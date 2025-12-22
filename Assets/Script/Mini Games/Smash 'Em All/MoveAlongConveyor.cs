@@ -46,9 +46,14 @@ public class MoveAlongConveyor : MonoBehaviour
         transform.position = spawnPoint.position;
         yield return new WaitForSeconds(timeAtSpawn);
 
-        // Wait until center is free and the item is infront of the line
-        while (centerBusy || centerQueue.Peek() != this)
+        // 🔧 SAFE WAIT — prevents freeze after scene reload
+        while (true)
+        {
+            if (!centerBusy && centerQueue.Count > 0 && centerQueue.Peek() == this)
+                break;
+
             yield return null;
+        }
 
         // Mark center as busy and leave the queue to move forward
         centerBusy = true;

@@ -37,7 +37,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
     void StartGame()
     {
-        if (EasyModeManager.Instance != null)
+        if (GameModeManager.Instance != null)
             timer = timeLimit;
 
         background.color = Color.black;
@@ -59,8 +59,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
     void Update()
     {
-        if (gameEnded) return;
-        if (EasyModeManager.Instance == null) return;
+        if (gameEnded || GameModeManager.Instance == null) return;
 
         timer -= Time.deltaTime;
 
@@ -69,7 +68,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             timer = 0f;
             gameEnded = true;
             commandDisplay.text = "";
-            EasyModeManager.Instance.MinigameFailed();
+            GameModeManager.Instance.MinigameFailed();
         }
     }
 
@@ -109,7 +108,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             else
                 mistakes++;
 
-            yield return new WaitForSeconds(feedbackTime);
+            yield return new WaitForSecondsRealtime(feedbackTime);
             background.color = Color.black;
 
             // ❌ GAME OVER (3 mistakes)
@@ -117,7 +116,8 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             {
                 gameEnded = true;
                 commandDisplay.text = "";
-                EasyModeManager.Instance.MinigameFailed();
+                StopAllCoroutines();
+                GameModeManager.Instance.MinigameFailed();
                 yield break;
             }
 
@@ -126,7 +126,8 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             {
                 gameEnded = true;
                 commandDisplay.text = "";
-                EasyModeManager.Instance.MinigameCompleted();
+                StopAllCoroutines();
+                GameModeManager.Instance.MinigameCompleted();
                 yield break;
             }
 
