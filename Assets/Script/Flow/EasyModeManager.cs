@@ -6,13 +6,15 @@ public class EasyModeManager : MonoBehaviour
 {
     public static EasyModeManager Instance;
 
-    public int lives = 3;   // Player lives
-    public int score = 0;   // Total score
+    public int lives = 3;
+    public int score = 0;
 
-    private float timer;        // Minigame timer
-    private bool timerRunning;  // Is the timer active?
+    [Header("Easy Mode Settings")]
+    public float minigameTimeLimit = 30f;
 
-    // Easy Mode minigame scenes
+    private float timer;
+    private bool timerRunning;
+
     private List<string> easyScenes = new List<string>()
     {
         "SliceEmAll",
@@ -28,7 +30,7 @@ public class EasyModeManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            ShuffleScenes(); // Randomize minigame order
+            ShuffleScenes();
         }
         else
         {
@@ -65,11 +67,12 @@ public class EasyModeManager : MonoBehaviour
     {
         if (currentSceneIndex >= easyScenes.Count)
         {
-            Debug.Log("EASY MODE COMPLETE!");
+            Debug.Log("ALL EASY MODE MINIGAMES COMPLETE");
+            Time.timeScale = 0f; // STOP WHOLE GAME
             return;
         }
 
-        timer = 30f;
+        timer = minigameTimeLimit;
         timerRunning = true;
 
         SceneManager.LoadScene(easyScenes[currentSceneIndex]);
@@ -81,19 +84,25 @@ public class EasyModeManager : MonoBehaviour
         if (!timerRunning) return;
 
         timerRunning = false;
-
         score += 20 + Mathf.FloorToInt(timer);
         LoadNextMinigame();
     }
 
     public void MinigameFailed()
     {
+        if (!timerRunning) return;
+
         timerRunning = false;
         lives--;
 
         if (lives <= 0)
+        {
             Debug.Log("GAME OVER");
+            Time.timeScale = 0f; // STOP GAME
+        }
         else
+        {
             LoadNextMinigame();
+        }
     }
 }

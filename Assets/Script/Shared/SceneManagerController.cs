@@ -22,4 +22,10 @@ public class SceneManagerController : MonoBehaviour
     {
         SceneManager.LoadScene("LandingPage");
     }
+
+    // Function to load the game
+    public void StartGame()
+    {
+        SceneManager.LoadScene("EasyModeBootstrap");
+    }
 }

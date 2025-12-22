@@ -26,6 +26,10 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     private int correctCount = 0;
     private int requiredCorrect;
 
+    public float timeLimit = 12f;
+    private float timer;
+    private bool gameEnded = false;
+
     void Start()
     {
         StartGame();
@@ -33,10 +37,14 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
     void StartGame()
     {
+        if (EasyModeManager.Instance != null)
+            timer = timeLimit;
+
         background.color = Color.black;
 
         mistakes = 0;
         correctCount = 0;
+        gameEnded = false;
 
         // Player needs 2–5 correct commands to win
         requiredCorrect = Random.Range(2, 6);
@@ -47,6 +55,22 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         AddRandomCommand();
 
         StartCoroutine(RunGame());
+    }
+
+    void Update()
+    {
+        if (gameEnded) return;
+        if (EasyModeManager.Instance == null) return;
+
+        timer -= Time.deltaTime;
+
+        if (timer <= 0f)
+        {
+            timer = 0f;
+            gameEnded = true;
+            commandDisplay.text = "";
+            EasyModeManager.Instance.MinigameFailed();
+        }
     }
 
     void AddRandomCommand()
@@ -91,14 +115,18 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             // ❌ GAME OVER (3 mistakes)
             if (mistakes >= 3)
             {
+                gameEnded = true;
                 commandDisplay.text = "";
+                EasyModeManager.Instance.MinigameFailed();
                 yield break;
             }
 
             // ✅ WIN (2–5 correct commands)
             if (correctCount >= requiredCorrect)
             {
+                gameEnded = true;
                 commandDisplay.text = "";
+                EasyModeManager.Instance.MinigameCompleted();
                 yield break;
             }
 

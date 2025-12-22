@@ -20,6 +20,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Mini Games/Simon Says/SimonSays.unity
     guid: 70de88cee5e26c74fafb2d16b115219b
+  - enabled: 1
+    path: Assets/Scenes/Flow/EasyModeBootstrap.unity
+    guid: 7e6f31c197474467baf1cb4481ed3a5e
+  - enabled: 1
+    path: Assets/Scenes/Mini Games/Smash 'Em All/SliceEmAll.unity
+    guid: 2beed5fedb7c94434a83e9f32ce77952
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0

@@ -7,16 +7,42 @@ public class GameManager : MonoBehaviour
     public int sliceGoal = 10;
     private int currentSlices;
 
+    public float timeLimit = 15f;
+    private float timer;
+
+    private bool gameEnded = false;
+
     void Awake()
     {
         if (Instance == null)
             Instance = this;
         else
+        {
             Destroy(gameObject);
+            return;
+        }
+    }
+
+    void Start()
+    {
+        if (EasyModeManager.Instance != null)
+            timer = timeLimit;
+    }
+
+    void Update()
+    {
+        if (gameEnded || EasyModeManager.Instance == null) return;
+
+        timer -= Time.deltaTime;
+
+        if (timer <= 0f)
+            LoseGame();
     }
 
     public void FruitSliced()
     {
+        if (gameEnded) return;
+
         currentSlices++;
 
         if (currentSlices >= sliceGoal)
@@ -25,7 +51,15 @@ public class GameManager : MonoBehaviour
 
     void WinGame()
     {
-        Time.timeScale = 0f;
-        Debug.Log("YOU WIN");
+        gameEnded = true;
+        EasyModeManager.Instance.MinigameCompleted();
+    }
+
+    public void LoseGame()
+    {
+        if (gameEnded) return;
+
+        gameEnded = true;
+        EasyModeManager.Instance.MinigameFailed();
     }
 }
