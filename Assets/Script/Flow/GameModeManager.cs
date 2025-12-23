@@ -72,6 +72,14 @@ public class GameModeManager : MonoBehaviour
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Time.timeScale = 1f;
+
+        // 🔧 Reset Slice Em All when scene loads
+        if (scene.name == "SliceEmAll")
+        {
+            MoveAlongConveyor.ResetSliceEmAll();
+            FruitSlice.currentCenterFruit = null;
+            BombExplode.currentCenterBomb = null;
+        }
     }
 
     void Start()
