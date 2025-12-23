@@ -154,10 +154,6 @@ MonoBehaviour:
   minigamesCompletedInMode: 0
   minigamesPerMode: 3
   timer: 0
-  minigameScenes:
-  - SliceEmAll
-  - Karate
-  - SimonSays
   transitionSceneName: TempTransition
   transitionDelay: 2
   gameOverSceneName: TempGameOver

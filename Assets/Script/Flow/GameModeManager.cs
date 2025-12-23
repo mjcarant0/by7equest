@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic;
 
 public class GameModeManager : MonoBehaviour
 {
@@ -28,14 +27,6 @@ public class GameModeManager : MonoBehaviour
     public float timer;
     private bool timerRunning;
 
-    [Header("Scenes")]
-    public List<string> minigameScenes = new List<string>()
-    {
-        "SliceEmAll",
-        "Karate",
-        "SimonSays"
-    };
-
     [Header("Transition")]
     public string transitionSceneName = "TempTransition";
     public float transitionDelay = 2f;
@@ -43,15 +34,12 @@ public class GameModeManager : MonoBehaviour
     [Header("Game Over")]
     public string gameOverSceneName = "TempGameOver";
 
-    private int currentSceneIndex = 0;
-
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            ShuffleScenes();
         }
         else
         {
@@ -73,18 +61,13 @@ public class GameModeManager : MonoBehaviour
     {
         Time.timeScale = 1f;
 
-        // 🔧 Reset Slice Em All when scene loads
+        // Reset specific minigame data if needed
         if (scene.name == "SliceEmAll")
         {
             MoveAlongConveyor.ResetSliceEmAll();
             FruitSlice.currentCenterFruit = null;
             BombExplode.currentCenterBomb = null;
         }
-    }
-
-    void Start()
-    {
-        LoadNextMinigame();
     }
 
     void Update()
@@ -99,32 +82,8 @@ public class GameModeManager : MonoBehaviour
         }
     }
 
-    void ShuffleScenes()
-    {
-        for (int i = 0; i < minigameScenes.Count; i++)
-        {
-            int rand = Random.Range(i, minigameScenes.Count);
-            (minigameScenes[i], minigameScenes[rand]) =
-            (minigameScenes[rand], minigameScenes[i]);
-        }
-    }
-
-    void LoadNextMinigame()
-    {
-        if (currentSceneIndex >= minigameScenes.Count)
-        {
-            ShuffleScenes();
-            currentSceneIndex = 0;
-        }
-
-        timer = GetTimeLimit();
-        timerRunning = true;
-
-        SceneManager.LoadScene(minigameScenes[currentSceneIndex]);
-        currentSceneIndex++;
-    }
-
-    float GetTimeLimit()
+    // External calls for minigame handling
+    public float GetTimeLimitForExternalCall()
     {
         switch (currentMode)
         {
@@ -135,7 +94,7 @@ public class GameModeManager : MonoBehaviour
         }
     }
 
-    int GetBaseScore()
+    public int GetBaseScoreForExternalCall()
     {
         switch (currentMode)
         {
@@ -146,6 +105,12 @@ public class GameModeManager : MonoBehaviour
         }
     }
 
+    public void StartTimerExternally()
+    {
+        timerRunning = true;
+    }
+
+    // Game progression
     void AdvanceDifficulty()
     {
         minigamesCompletedInMode = 0;
@@ -160,14 +125,11 @@ public class GameModeManager : MonoBehaviour
         Debug.Log("Difficulty increased to: " + currentMode);
     }
 
-    public void MinigameCompleted()
+    public void MinigameCompleted(int timeBonus = 0)
     {
-        if (!timerRunning) return;
-
         timerRunning = false;
 
-        int bonus = Mathf.FloorToInt(timer);
-        int points = GetBaseScore() + bonus;
+        int points = GetBaseScoreForExternalCall() + timeBonus;
 
         if (currentMode == GameMode.God)
         {
@@ -181,26 +143,17 @@ public class GameModeManager : MonoBehaviour
         {
             StartCoroutine(ModeTransitionRoutine());
         }
-        else
-        {
-            LoadNextMinigame();
-        }
     }
 
     public void MinigameFailed()
     {
-        if (!timerRunning) return;
-
         timerRunning = false;
         lives--;
 
         if (lives <= 0)
         {
             TriggerGameOver();
-            return;
         }
-
-        LoadNextMinigame();
     }
 
     IEnumerator ModeTransitionRoutine()
@@ -212,7 +165,6 @@ public class GameModeManager : MonoBehaviour
 
         Time.timeScale = 1f;
         AdvanceDifficulty();
-        LoadNextMinigame();
     }
 
     void TriggerGameOver()
