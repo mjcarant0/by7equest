@@ -18,6 +18,8 @@ public class ItemSpawner : MonoBehaviour
     private float topItemTimer = 0f; 
     private Vector3 initialTablePos;
 
+    private bool gameEnded = false;
+
     void Start()
     {
         initialTablePos = karateTable.transform.position;
@@ -31,10 +33,10 @@ public class ItemSpawner : MonoBehaviour
         for (int i = 0; i < itemsPerRound; i++)
         {
             SpawnItem(i);
-            yield return new WaitForSeconds(spawnDelay);
+            yield return new WaitForSecondsRealtime(spawnDelay);
         }
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSecondsRealtime(0.5f);
         
         isSpawning = false;
     }
@@ -53,6 +55,18 @@ public class ItemSpawner : MonoBehaviour
     void Update()
     {
         // karate table
+        if (gameEnded) return;
+
+        // ✅ WIN CONDITION (stack cleared)
+        if (!isSpawning && woodStack.Count == 0 && !gameEnded)
+        {
+            gameEnded = true;
+            GameModeManager.Instance.MinigameCompleted();
+            enabled = false;
+            return;
+        }
+
+        // karate table movement
         if (karateTable != null)
         {
             float targetY = initialTablePos.y - (woodStack.Count * itemSpacing);

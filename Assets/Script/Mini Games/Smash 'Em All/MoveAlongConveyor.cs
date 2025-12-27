@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Collections.Generic;
 
 public class MoveAlongConveyor : MonoBehaviour
 {
@@ -9,7 +8,6 @@ public class MoveAlongConveyor : MonoBehaviour
     public float sliceDisplayTime = 0.35f;
     public float timeAtEnd = 0.6f;
 
-    private static Queue<MoveAlongConveyor> centerQueue = new Queue<MoveAlongConveyor>();
     private static bool centerBusy;
 
     private Transform spawnPoint;
@@ -20,6 +18,12 @@ public class MoveAlongConveyor : MonoBehaviour
     private BombExplode bomb;
     private FruitSpawner spawner;
 
+    // Called explicitly when SliceEmAll loads
+    public static void ResetSliceEmAll()
+    {
+        centerBusy = false;
+    }
+
     void Start()
     {
         spawnPoint = GameObject.Find("SpawnPoint").transform;
@@ -28,9 +32,6 @@ public class MoveAlongConveyor : MonoBehaviour
 
         fruitSlice = GetComponent<FruitSlice>();
         bomb = GetComponent<BombExplode>();
-
-        // Join the queue to wait for a turn at the center
-        centerQueue.Enqueue(this);
 
         StartCoroutine(MoveRoutine());
     }
@@ -46,13 +47,12 @@ public class MoveAlongConveyor : MonoBehaviour
         transform.position = spawnPoint.position;
         yield return new WaitForSeconds(timeAtSpawn);
 
-        // Wait until center is free and the item is infront of the line
-        while (centerBusy || centerQueue.Peek() != this)
+        // Wait until center is free
+        while (centerBusy)
             yield return null;
 
-        // Mark center as busy and leave the queue to move forward
+        // Claim center
         centerBusy = true;
-        centerQueue.Dequeue();
 
         // Tell spawner that spawn is empty
         if (spawner != null)
