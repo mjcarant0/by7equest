@@ -6,7 +6,7 @@ public class SceneManagerController : MonoBehaviour
     // Function to load the ScorePage
     public void LoadScorePage()
     {
-        SceneManager.LoadScene("ScorePage");
+        SceneManager.LoadScene("ScoreScene");
     }
 
     // Function to load the CreditsPage

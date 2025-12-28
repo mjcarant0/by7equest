@@ -483,6 +483,52 @@ Transform:
   - {fileID: 168418840}
   m_Father: {fileID: 35658587}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &374044756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 374044758}
+  - component: {fileID: 374044757}
+  m_Layer: 0
+  m_Name: HideUIOnClick
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &374044757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374044756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98242a3ca547b474db40a5c6ce0e2ee2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiElementsToHide:
+  - {fileID: 35658583}
+--- !u!4 &374044758
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 374044756}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -970,7 +1016,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ffba2c97ab1744c4b866c5a0865e00bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiElementsToHide: []
+  uiElementsToHide:
+  - {fileID: 35658583}
 --- !u!1 &1117590087
 GameObject:
   m_ObjectHideFlags: 0
@@ -1176,6 +1223,7 @@ GameObject:
   - component: {fileID: 1443912163}
   - component: {fileID: 1443912162}
   - component: {fileID: 1443912161}
+  - component: {fileID: 1443912164}
   m_Layer: 5
   m_Name: credits-button
   m_TagString: Untagged
@@ -1258,6 +1306,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 374044757}
+        m_TargetAssemblyTypeName: HideUIOnClick, Assembly-CSharp
+        m_MethodName: OnButtonPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1443912162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1296,6 +1356,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1443912159}
   m_CullTransparentMesh: 1
+--- !u!114 &1443912164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1443912159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98242a3ca547b474db40a5c6ce0e2ee2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiElementsToHide:
+  - {fileID: 35658583}
 --- !u!1 &1645379676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1388,6 +1462,7 @@ GameObject:
   - component: {fileID: 1982176711}
   - component: {fileID: 1982176710}
   - component: {fileID: 1982176709}
+  - component: {fileID: 1982176712}
   m_Layer: 5
   m_Name: score-button
   m_TagString: Untagged
@@ -1470,6 +1545,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 374044757}
+        m_TargetAssemblyTypeName: HideUIOnClick, Assembly-CSharp
+        m_MethodName: OnButtonPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1982176710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1508,51 +1595,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1982176707}
   m_CullTransparentMesh: 1
---- !u!1 &2025758306
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2025758308}
-  - component: {fileID: 2025758307}
-  m_Layer: 0
-  m_Name: StartButton
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2025758307
+--- !u!114 &1982176712
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2025758306}
+  m_GameObject: {fileID: 1982176707}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ffba2c97ab1744c4b866c5a0865e00bd, type: 3}
+  m_Script: {fileID: 11500000, guid: 98242a3ca547b474db40a5c6ce0e2ee2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiElementsToHide: []
---- !u!4 &2025758308
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2025758306}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.7024636, y: 1.6863564, z: -0.00808494}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  uiElementsToHide:
+  - {fileID: 35658583}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1562,6 +1618,6 @@ SceneRoots:
   - {fileID: 35658587}
   - {fileID: 67275415}
   - {fileID: 125992448}
-  - {fileID: 2025758308}
   - {fileID: 1952983720}
   - {fileID: 206804684}
+  - {fileID: 374044758}
