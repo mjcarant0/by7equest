@@ -84,4 +84,3 @@ public class MinigameRandomizer : MonoBehaviour
         SceneManager.LoadScene(nextScene);
     }
 }
-

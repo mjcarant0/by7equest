@@ -53,19 +53,28 @@ public class GameModeManager : MonoBehaviour
 
     private void Start()
     {
+        StartCoroutine(InitializeHeartUI());
+    }
+
+    private IEnumerator InitializeHeartUI()
+    {
+        // Wait one frame to ensure all objects are loaded
+        yield return null;
+        
         if (heartUIHandler == null)
         {
             heartUIHandler = FindObjectOfType<HeartUIHandler>();
+            if (heartUIHandler == null)
+            {
+                Debug.LogWarning("[GameModeManager] HeartUIHandler not found in scene! Please add HeartUIHandler component to your UI.");
+            }
         }
         
         if (heartUIHandler != null)
         {
             heartUIHandler.HideHearts();
             heartUIHandler.UpdateHearts(lives);
-        }
-        else
-        {
-            Debug.LogWarning("[GameModeManager] HeartUIHandler not found!");
+            Debug.Log("[GameModeManager] Heart UI initialized successfully");
         }
     }
 
@@ -79,7 +88,7 @@ public class GameModeManager : MonoBehaviour
 
         timerRunning = false;
         
-        // Life loss of heart
+        // Life loss or heart update
         if (!success)
         {
             lives--;
@@ -130,28 +139,37 @@ public class GameModeManager : MonoBehaviour
             yield break;
         }
 
-        // Increment minigames completed
         minigamesCompletedInMode++;
         Debug.Log($"[GameModeManager] Completed {minigamesCompletedInMode}/{gamesPerMode} games in {currentMode} mode");
 
         // Check if we need to advance difficulty
-        if (currentMode != GameMode.God && minigamesCompletedInMode >= gamesPerMode)
+        if (minigamesCompletedInMode >= gamesPerMode)
         {
             minigamesCompletedInMode = 0;
-            GameMode nextMode = AdvanceDifficulty();
-            Debug.Log($"[GameModeManager] Advancing difficulty to {nextMode}");
             
-            // Show transition, then it will load Game Start directly
-            yield return StartCoroutine(ShowModeTransition(nextMode));
-            yield break;
+            if (currentMode != GameMode.God)
+            {
+                // Advance to next difficulty
+                GameMode nextMode = AdvanceDifficulty();
+                Debug.Log($"[GameModeManager] Advancing difficulty from {currentMode} to {nextMode}");
+                
+                // Show transition, then it will load Game Start
+                yield return StartCoroutine(ShowModeTransition(nextMode));
+                yield break;
+            }
+            else
+            {
+                // Already in God mode, just continue
+                Debug.Log($"[GameModeManager] Completed {gamesPerMode} games in God mode, continuing in God mode");
+            }
         }
 
-        // Continue in current mode - go directly to Game Start (NOT Opening Scene)
+        // Continue in current mode - go directly to Game Start
         Debug.Log($"[GameModeManager] Continuing in {currentMode} mode, loading Game Start");
         SceneManager.LoadScene(gameStartScene);
     }
 
-        private IEnumerator ShowModeTransition(GameMode newMode)
+    private IEnumerator ShowModeTransition(GameMode newMode)
     {
         Debug.Log($"[GameModeManager] Showing transition to {newMode}");
         
@@ -159,9 +177,9 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(transitionScene);
         yield return new WaitForSecondsRealtime(0.5f);
 
-        // Wait for TempTransitionController
         float waitTime = 0f;
-        while (TempTransitionController.Instance == null && waitTime < 2f)
+        float maxWaitTime = 3f;
+        while (TempTransitionController.Instance == null && waitTime < maxWaitTime)
         {
             yield return new WaitForSecondsRealtime(0.1f);
             waitTime += 0.1f;
@@ -169,28 +187,39 @@ public class GameModeManager : MonoBehaviour
         
         if (TempTransitionController.Instance == null)
         {
-            Debug.LogError("[GameModeManager] TempTransitionController not found!");
+            Debug.LogError("[GameModeManager] TempTransitionController not found after waiting! Skipping transition.");
             SceneManager.LoadScene(gameStartScene);
             yield break;
         }
         
         if (TempTransitionController.Instance.backgroundImage == null)
         {
-            Debug.LogError("[GameModeManager] TempTransitionController backgroundImage not assigned!");
+            Debug.LogError("[GameModeManager] TempTransitionController backgroundImage not assigned! Skipping transition.");
             SceneManager.LoadScene(gameStartScene);
             yield break;
         }
 
-        // Show transition
         bool transitionComplete = false;
         TempTransitionController.Instance.ShowTransition(newMode, () =>
         {
             transitionComplete = true;
         });
 
-        yield return new WaitUntil(() => transitionComplete);
+        // Wait for transition with timeout
+        float transitionWaitTime = 0f;
+        float transitionTimeout = 5f;
+        while (!transitionComplete && transitionWaitTime < transitionTimeout)
+        {
+            yield return new WaitForSecondsRealtime(0.1f);
+            transitionWaitTime += 0.1f;
+        }
         
-        // After mode transition, go directly to Game Start (NOT OPENING SCENE)
+        if (!transitionComplete)
+        {
+            Debug.LogWarning("[GameModeManager] Transition did not complete in time, continuing anyway");
+        }
+        
+        // After mode transition, go directly to Game Start
         Debug.Log("[GameModeManager] Transition complete, loading Game Start");
         SceneManager.LoadScene(gameStartScene);
     }
@@ -270,13 +299,23 @@ public class GameModeManager : MonoBehaviour
 
     public void StartTimerExternally()
     {
+        if (heartUIHandler == null)
+        {
+            heartUIHandler = FindObjectOfType<HeartUIHandler>();
+        }
+        
         if (heartUIHandler != null)
         {
             heartUIHandler.ShowHearts();
+            heartUIHandler.UpdateHearts(lives);
+        }
+        else
+        {
+            Debug.LogWarning("[GameModeManager] HeartUIHandler not found when starting timer!");
         }
         
         timerRunning = true;
-        Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode");
+        Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode with {lives} lives");
     }
 
     private void Update()
