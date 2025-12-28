@@ -47,6 +47,7 @@ public class MinigameRandomizer : MonoBehaviour
             Shuffle();
             currentIndex = 0;
         }
+
         return minigameScenes[currentIndex];
     }
 
@@ -54,7 +55,7 @@ public class MinigameRandomizer : MonoBehaviour
     {
         if (Instance == null)
         {
-            Debug.LogError("MinigameRandomizer.Instance is null!");
+            Debug.LogError("MinigameRandomizer.Instance is null in LoadNextMinigame!");
             return;
         }
 
@@ -64,16 +65,23 @@ public class MinigameRandomizer : MonoBehaviour
             currentIndex = 0;
         }
 
-        // Set timer according to difficulty
         if (GameModeManager.Instance != null)
         {
+            // Set timer according to difficulty
             GameModeManager.Instance.timer =
                 GameModeManager.Instance.GetTimeLimitForExternalCall();
             GameModeManager.Instance.StartTimerExternally();
         }
+        else
+        {
+            Debug.LogError("GameModeManager.Instance is null when loading minigame!");
+        }
 
         string nextScene = minigameScenes[currentIndex];
         currentIndex++;
+        
+        Debug.Log($"Loading minigame: {nextScene}");
         SceneManager.LoadScene(nextScene);
     }
 }
+

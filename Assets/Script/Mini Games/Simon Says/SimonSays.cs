@@ -68,7 +68,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             timer = 0f;
             gameEnded = true;
             commandDisplay.text = "";
-            GameModeManager.Instance.MinigameFailed();
+            GameModeManager.Instance.ResolveMinigame(false);
         }
     }
 
@@ -117,7 +117,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
                 gameEnded = true;
                 commandDisplay.text = "";
                 StopAllCoroutines();
-                GameModeManager.Instance.MinigameFailed();
+                GameModeManager.Instance.ResolveMinigame(false);
                 yield break;
             }
 
@@ -127,7 +127,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
                 gameEnded = true;
                 commandDisplay.text = "";
                 StopAllCoroutines();
-                GameModeManager.Instance.MinigameCompleted();
+                GameModeManager.Instance.ResolveMinigame(true);
                 yield break;
             }
 

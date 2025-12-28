@@ -150,13 +150,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lives: 3
   score: 0
+  lastMinigameScore: 0
   currentMode: 0
   minigamesCompletedInMode: 0
-  minigamesPerMode: 3
+  gamesPerMode: 6
   timer: 0
-  transitionSceneName: TempTransition
-  transitionDelay: 2
-  gameOverSceneName: TempGameOver
+  transitionScene: TempTransition
+  gameStartScene: GameStart
+  gameEndScene: GameEnd
+  scoreScene: ScoreScene
+  nameInputScene: NameInput
+  closingScene: ClosingScene
+  landingPage: LandingPage
+  heartUIHandler: {fileID: 0}
+  sceneDelay: 2.5
 --- !u!4 &529308997
 Transform:
   m_ObjectHideFlags: 0

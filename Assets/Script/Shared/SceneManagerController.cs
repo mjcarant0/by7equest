@@ -1,5 +1,3 @@
-/// This script manages scene transitions in the Unity application.
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 

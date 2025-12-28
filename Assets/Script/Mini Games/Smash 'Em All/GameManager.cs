@@ -57,7 +57,7 @@ public class GameManager : MonoBehaviour
         if (gameEnded) return;
 
         gameEnded = true;
-        GameModeManager.Instance.MinigameCompleted();
+        GameModeManager.Instance.ResolveMinigame(true);
     }
 
     public void LoseGame()
@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviour
         if (gameEnded) return;
 
         gameEnded = true;
-        GameModeManager.Instance.MinigameFailed();
+        GameModeManager.Instance.ResolveMinigame(false);
     }
 
     void OnDestroy()

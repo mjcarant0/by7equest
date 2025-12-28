@@ -1,91 +1,81 @@
 using UnityEngine;
 using System.Collections;
 
-public class GameStartController : MonoBehaviour
+namespace Flow
 {
-    [Header("Animation Reference")]
-    public GameStartAnimation animationController; // assign in Inspector
-
-    [Header("Description Objects Only")]
-    public GameObject karateDescription;
-    public GameObject simonSaysDescription;
-    public GameObject sliceEmAllDescription;
-
-    [Header("Wait Time After Zoom (seconds)")]
-    public float waitAfterZoom = 3f;
-
-    IEnumerator Start()
+    public class GameStartController : MonoBehaviour
     {
-        // Wait a frame to ensure MinigameRandomizer exists
-        yield return new WaitForEndOfFrame();
-
-        if (MinigameRandomizer.Instance == null)
+        [Header("Animation Reference")]
+        public GameStartAnimation animationController;
+        
+        void Start()
         {
-            GameObject temp = new GameObject("MinigameRandomizer");
-            temp.AddComponent<MinigameRandomizer>();
-        }
+            if (animationController == null)
+            {
+                Debug.LogWarning("[GameStartController] GameStartAnimation not assigned!");
+                return;
+            }
 
-        // Subscribe to animation finished event
-        if (animationController != null)
+            StartCoroutine(WaitForRandomizerAndStart());
+        }
+        
+        private IEnumerator WaitForRandomizerAndStart()
         {
-            animationController.OnAnimationFinished += OnIntroFinished;
+            Debug.Log("[GameStartController] Starting Game Start sequence");
+            
+            // Wait up to 2 seconds for MinigameRandomizer to initialize
+            float waitTime = 0f;
+            while (MinigameRandomizer.Instance == null && waitTime < 2f)
+            {
+                yield return new WaitForSeconds(0.1f);
+                waitTime += 0.1f;
+            }
+            
+            if (MinigameRandomizer.Instance == null)
+            {
+                Debug.LogError("[GameStartController] MinigameRandomizer still not found after waiting! Using fallback title.");
+                // Use first available title as fallback
+                animationController.SetTitle("Karate");
+                animationController.OnAnimationFinished += OnAnimationComplete;
+                animationController.StartAnimation();
+                yield break;
+            }
+            
+            Debug.Log("[GameStartController] MinigameRandomizer found, getting title");
+            
+            string minigameTitle = MinigameRandomizer.Instance.GetNextMinigameName();
+            Debug.Log($"[GameStartController] Got title from randomizer: {minigameTitle}");
+            
+            // Set the title before starting
+            animationController.SetTitle(minigameTitle);
+            
+            // Subscribe to animation finished event
+            animationController.OnAnimationFinished += OnAnimationComplete;
+            
+            Debug.Log("[GameStartController] Starting animation with title: " + minigameTitle);
+            animationController.StartAnimation();
         }
-        else
+        
+        private void OnAnimationComplete()
         {
-            Debug.LogWarning("GameStartAnimation not assigned in Inspector!");
-            OnIntroFinished(); // fallback
+            Debug.Log("[GameStartController] Animation completed, loading minigame");
+            
+            if (GameModeManager.Instance != null)
+            {
+                GameModeManager.Instance.LoadNextMinigame();
+            }
+            else
+            {
+                Debug.LogError("[GameStartController] GameModeManager instance not found!");
+            }
         }
-    }
-
-    public void OnIntroFinished()
-    {
-        string nextMinigame = MinigameRandomizer.Instance.GetNextMinigameName();
-
-        StartCoroutine(ShowDescriptionCoroutine(nextMinigame));
-    }
-
-    IEnumerator ShowDescriptionCoroutine(string minigameName)
-    {
-        DisableAllDescriptions();
-
-        switch (minigameName)
+        
+        private void OnDestroy()
         {
-            case "Karate":
-                if (karateDescription != null)
-                {
-                    karateDescription.SetActive(true);
-                    yield return new WaitForSeconds(waitAfterZoom);
-                    karateDescription.SetActive(false);
-                }
-                break;
-
-            case "SimonSays":
-                if (simonSaysDescription != null)
-                {
-                    simonSaysDescription.SetActive(true);
-                    yield return new WaitForSeconds(waitAfterZoom);
-                    simonSaysDescription.SetActive(false);
-                }
-                break;
-
-            case "SliceEmAll":
-                if (sliceEmAllDescription != null)
-                {
-                    sliceEmAllDescription.SetActive(true);
-                    yield return new WaitForSeconds(waitAfterZoom);
-                    sliceEmAllDescription.SetActive(false);
-                }
-                break;
+            if (animationController != null)
+            {
+                animationController.OnAnimationFinished -= OnAnimationComplete;
+            }
         }
-
-        // Load the minigame scene
-        MinigameRandomizer.Instance.LoadNextMinigame();
-    }
-
-    void DisableAllDescriptions()
-    {
-        if (karateDescription != null) karateDescription.SetActive(false);
-        if (simonSaysDescription != null) simonSaysDescription.SetActive(false);
-        if (sliceEmAllDescription != null) sliceEmAllDescription.SetActive(false);
     }
 }

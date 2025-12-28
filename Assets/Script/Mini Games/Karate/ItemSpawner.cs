@@ -61,7 +61,7 @@ public class ItemSpawner : MonoBehaviour
         if (!isSpawning && woodStack.Count == 0 && !gameEnded)
         {
             gameEnded = true;
-            GameModeManager.Instance.MinigameCompleted();
+            GameModeManager.Instance.ResolveMinigame(true);
             enabled = false;
             return;
         }
