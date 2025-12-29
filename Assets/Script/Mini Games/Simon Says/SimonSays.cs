@@ -38,7 +38,14 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     void StartGame()
     {
         if (GameModeManager.Instance != null)
+        {
             timer = timeLimit;
+            
+            // Adjust speed based on difficulty
+            float speedMultiplier = GetSpeedMultiplier();
+            commandTime /= speedMultiplier;
+            feedbackTime /= speedMultiplier;
+        }
 
         background.color = Color.black;
 
@@ -149,5 +156,17 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         if (cmd == "Don't press me") return pressed;
 
         return false;
+    }
+
+    float GetSpeedMultiplier()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 1.0f;
+            case GameModeManager.GameMode.Medium: return 1.3f;
+            case GameModeManager.GameMode.Hard: return 1.6f;
+            case GameModeManager.GameMode.God: return 2.0f;
+            default: return 1.0f;
+        }
     }
 }

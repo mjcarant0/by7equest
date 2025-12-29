@@ -12,6 +12,7 @@ public class ItemSpawner : MonoBehaviour
     public float spawnDelay = 0.2f; 
     public int itemsPerRound = 10; 
     public float itemSpacing = 0.45f;
+    public float itemFallTime = 1.0f;
 
     private Stack<GameObject> woodStack = new Stack<GameObject>();
     private bool isSpawning = false;
@@ -23,7 +24,28 @@ public class ItemSpawner : MonoBehaviour
     void Start()
     {
         initialTablePos = karateTable.transform.position;
+        
+        // Adjust speed based on difficulty
+        if (GameModeManager.Instance != null)
+        {
+            float speedMultiplier = GetSpeedMultiplier();
+            spawnDelay /= speedMultiplier;
+            itemFallTime /= speedMultiplier;
+        }
+        
         StartCoroutine(SpawnInitialStack());
+    }
+
+    float GetSpeedMultiplier()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 1.0f;
+            case GameModeManager.GameMode.Medium: return 1.3f;
+            case GameModeManager.GameMode.Hard: return 1.6f;
+            case GameModeManager.GameMode.God: return 2.0f;
+            default: return 1.0f;
+        }
     }
 
     System.Collections.IEnumerator SpawnInitialStack()
@@ -88,7 +110,7 @@ public class ItemSpawner : MonoBehaviour
         
         topItemTimer += Time.deltaTime;
 
-        if (topItemTimer >= 1.0f)
+        if (topItemTimer >= itemFallTime)
         {
             // POP
             woodStack.Pop(); 

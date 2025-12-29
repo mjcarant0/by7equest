@@ -33,7 +33,29 @@ public class MoveAlongConveyor : MonoBehaviour
         fruitSlice = GetComponent<FruitSlice>();
         bomb = GetComponent<BombExplode>();
 
+        // Adjust timing based on difficulty
+        if (GameModeManager.Instance != null)
+        {
+            float speedMultiplier = GetSpeedMultiplier();
+            timeAtSpawn /= speedMultiplier;
+            maxTimeAtCenter /= speedMultiplier;
+            sliceDisplayTime /= speedMultiplier;
+            timeAtEnd /= speedMultiplier;
+        }
+
         StartCoroutine(MoveRoutine());
+    }
+
+    float GetSpeedMultiplier()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 1.0f;
+            case GameModeManager.GameMode.Medium: return 1.3f;
+            case GameModeManager.GameMode.Hard: return 1.6f;
+            case GameModeManager.GameMode.God: return 2.0f;
+            default: return 1.0f;
+        }
     }
 
     public void SetSpawner(FruitSpawner s)

@@ -265,11 +265,11 @@ public class GameModeManager : MonoBehaviour
     {
         switch (currentMode)
         {
-            case GameMode.Easy: return 30f;
-            case GameMode.Medium: return 25f;
-            case GameMode.Hard: return 20f;
-            case GameMode.God: return 15f;
-            default: return 30f;
+            case GameMode.Easy: return 20f;
+            case GameMode.Medium: return 15f;
+            case GameMode.Hard: return 12f;
+            case GameMode.God: return 10f;
+            default: return 20f;
         }
     }
 
