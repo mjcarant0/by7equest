@@ -2,6 +2,29 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
+/// <summary>
+/// Game Flow Manager - Controls progression through all difficulty modes
+/// 
+/// PERSISTENCE: Uses DontDestroyOnLoad singleton pattern to persist across ALL scenes
+/// 
+/// NO HEART SYSTEM: Player progresses through all modes regardless of performance
+/// 
+/// GAME LOOP LOGIC:
+/// Easy/Medium/Hard Modes:
+///   - Each mode requires exactly 6 minigames
+///   - After 6th game, triggers TempTransition to next mode
+///   - Counter resets when advancing to next mode
+/// 
+/// God Mode:
+///   - Plays exactly 10 minigames
+///   - After 10th game, game is complete
+///   - Goes directly to NameInput scene
+/// 
+/// SCENE FLOW:
+/// Normal: GameEnd → GameStart (next minigame)
+/// Mode Complete: GameEnd → TempTransition → GameStart (new mode)
+/// Game Complete: GameEnd → NameInput (save score)
+/// </summary>
 public class GameModeManager : MonoBehaviour
 {
     public static GameModeManager Instance;
@@ -9,9 +32,6 @@ public class GameModeManager : MonoBehaviour
     public enum GameMode { Easy, Medium, Hard, God }
 
     [Header("Player Stats - Persistent Across Scenes")]
-    [Tooltip("HEART SYSTEM: Player health, starts at 3. Persists across all scenes.")]
-    public int lives = 3;
-    
     [Tooltip("Total accumulated score across all minigames and modes")]
     public int score = 0;
     
@@ -25,8 +45,11 @@ public class GameModeManager : MonoBehaviour
     [Tooltip("Tracks completed minigames in current mode. Resets to 0 when advancing modes.")]
     public int minigamesCompletedInMode = 0;
     
-    [Tooltip("Required games per mode for Easy/Medium/Hard (default: 6). God mode has no limit.")]
+    [Tooltip("Required games per mode for Easy/Medium/Hard (default: 6)")]
     public int gamesPerMode = 6;
+    
+    [Tooltip("Required games for God mode (default: 10)")]
+    public int godModeGames = 10;
 
     [Header("Timer")]
     public float timer;
@@ -36,12 +59,8 @@ public class GameModeManager : MonoBehaviour
     public string transitionScene = "TempTransition";
     public string gameStartScene = "GameStart"; 
     public string gameEndScene = "GameEnd";
-    public string scoreScene = "ScoreScene";
-    public string closingScene = "ClosingScene";
+    public string nameInputScene = "NameInput";
     public string landingPage = "LandingPage";
-
-    [Header("References")]
-    public HeartUIHandler heartUIHandler;
 
     public float sceneDelay = 2.5f;
 
@@ -61,33 +80,15 @@ public class GameModeManager : MonoBehaviour
         }
     }
 
-    private void Start()
-    {
-        StartCoroutine(InitializeHeartUI());
-    }
-
-    private IEnumerator InitializeHeartUI()
-    {
-        // Wait one frame to ensure all objects are loaded
-        yield return null;
-        
-        if (heartUIHandler == null) // To Fix: Remove heart ui handler to Landing Page
-        {
-            heartUIHandler = FindObjectOfType<HeartUIHandler>();
-            if (heartUIHandler == null)
-            {
-                Debug.LogWarning("[GameModeManager] HeartUIHandler not found in scene! Please add HeartUIHandler component to your UI.");
-            }
-        }
-        
-        if (heartUIHandler != null)
-        {
-            heartUIHandler.HideHearts();
-            heartUIHandler.UpdateHearts(lives);
-            Debug.Log("[GameModeManager] Heart UI initialized successfully");
-        }
-    }
-
+    /// <summary>
+    /// Main minigame resolution handler - Called when a minigame ends
+    /// 
+    /// NO HEART SYSTEM: Success/failure only affects score, not progression
+    /// SCORING: Calculates score based on success, time bonus, and current mode
+    /// FLOW: Triggers PostGameSequence which handles all subsequent logic
+    /// </summary>
+    /// <param name="success">Did the player win the minigame?</param>
+    /// <param name="timeBonus">Bonus points for completing quickly</param>
     public void ResolveMinigame(bool success, int timeBonus = 0)
     {
         if (Instance == null)
@@ -98,18 +99,7 @@ public class GameModeManager : MonoBehaviour
 
         timerRunning = false;
         
-        // Life loss or heart update
-        if (!success)
-        {
-            lives--;
-            Debug.Log($"[GameModeManager] Player lost a life. Remaining lives: {lives}");
-            if (heartUIHandler != null)
-            {
-                heartUIHandler.UpdateHearts(lives);
-            }
-        }
-
-        // Calculate score for this minigame
+        // Calculate score for this minigame (no heart loss)
         lastMinigameScore = success ? (GetBaseScoreForExternalCall() + timeBonus) : 0;
         if (currentMode == GameMode.God && success)
         {
@@ -122,6 +112,19 @@ public class GameModeManager : MonoBehaviour
         StartCoroutine(PostGameSequence());
     }
 
+    /// <summary>
+    /// Post-Game Sequence - Controls entire game flow after minigame completion
+    /// 
+    /// FLOW LOGIC:
+    /// 1. Load GameEnd scene (shows result)
+    /// 2. Increment minigamesCompletedInMode counter
+    /// 3. For Easy/Medium/Hard: Check if 6 games completed
+    ///    - YES: Show TempTransition → Advance mode → GameStart
+    ///    - NO: Load GameStart (continue current mode)
+    /// 4. For God Mode: Check if 10 games completed
+    ///    - YES: Game Complete! → Load NameInput scene
+    ///    - NO: Load GameStart (continue God mode)
+    /// </summary>
     private IEnumerator PostGameSequence()
     {
         Debug.Log("[GameModeManager] Starting post-game sequence");
@@ -131,51 +134,38 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(gameEndScene);
         yield return new WaitForSecondsRealtime(sceneDelay); 
 
-        // Check if game is over (no lives left)
-        if (lives <= 0)
-        {
-            if (heartUIHandler != null)
-            {
-                heartUIHandler.HideHearts();
-            }
-            
-            Debug.Log("[GameModeManager] Game Over! Loading Score Scene then Closing Scene");
-            
-            // Show Score Scene only at final game over
-            SceneManager.LoadScene(scoreScene);
-            yield return new WaitForSecondsRealtime(sceneDelay);
-            
-            SceneManager.LoadScene(closingScene);
-            yield break;
-        }
-
         minigamesCompletedInMode++;
-        Debug.Log($"[GameModeManager] Completed {minigamesCompletedInMode}/{gamesPerMode} games in {currentMode} mode");
+        Debug.Log($"[GameModeManager] Completed {minigamesCompletedInMode} games in {currentMode} mode");
 
-        // Check if we need to advance difficulty
-        if (minigamesCompletedInMode >= gamesPerMode)
+        // Check if current mode is complete
+        int requiredGames = (currentMode == GameMode.God) ? godModeGames : gamesPerMode;
+        
+        if (minigamesCompletedInMode >= requiredGames)
         {
-            if (currentMode != GameMode.God)
+            // Mode complete!
+            if (currentMode == GameMode.God)
             {
-                // Advance to next difficulty
+                // God mode complete - GAME IS FINISHED!
+                Debug.Log("[GameModeManager] God mode complete! Game finished. Going to NameInput scene.");
+                SceneManager.LoadScene(nameInputScene);
+                yield break;
+            }
+            else
+            {
+                // Easy/Medium/Hard complete - advance to next mode
                 GameMode previousMode = currentMode;
                 minigamesCompletedInMode = 0; // Reset counter for new mode
                 AdvanceDifficulty();
-                Debug.Log($"[GameModeManager] Completed {gamesPerMode} games in {previousMode}, advancing to {currentMode}");
+                Debug.Log($"[GameModeManager] Completed {requiredGames} games in {previousMode}, advancing to {currentMode}");
                 
                 // Show transition, then it will load Game Start
                 yield return StartCoroutine(ShowModeTransition(currentMode));
                 yield break;
             }
-            else
-            {
-                // Already in God mode, just continue (no game limit in God mode)
-                Debug.Log($"[GameModeManager] In God mode, continuing...");
-            }
         }
 
         // Continue in current mode - go directly to Game Start
-        Debug.Log($"[GameModeManager] Continuing in {currentMode} mode ({minigamesCompletedInMode}/{gamesPerMode}), loading Game Start");
+        Debug.Log($"[GameModeManager] Continuing in {currentMode} mode ({minigamesCompletedInMode}/{requiredGames}), loading Game Start");
         SceneManager.LoadScene(gameStartScene);
     }
 
@@ -294,38 +284,16 @@ public class GameModeManager : MonoBehaviour
     private void ResetGame()
     {
         Debug.Log("[GameModeManager] Resetting game state");
-        lives = 3;
         score = 0;
         lastMinigameScore = 0;
         minigamesCompletedInMode = 0;
         currentMode = GameMode.Easy;
-        
-        if (heartUIHandler != null)
-        {
-            heartUIHandler.UpdateHearts(lives);
-            heartUIHandler.HideHearts();
-        }
     }
 
     public void StartTimerExternally()
     {
-        if (heartUIHandler == null)
-        {
-            heartUIHandler = FindObjectOfType<HeartUIHandler>();
-        }
-        
-        if (heartUIHandler != null)
-        {
-            heartUIHandler.ShowHearts();
-            heartUIHandler.UpdateHearts(lives);
-        }
-        else
-        {
-            Debug.LogWarning("[GameModeManager] HeartUIHandler not found when starting timer!");
-        }
-        
         timerRunning = true;
-        Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode with {lives} lives");
+        Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode");
     }
 
     private void Update()

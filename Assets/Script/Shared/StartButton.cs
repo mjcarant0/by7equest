@@ -45,12 +45,11 @@ public class StartButton : MonoBehaviour
         // Reset game state for new session
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.lives = 3;
             GameModeManager.Instance.score = 0;
             GameModeManager.Instance.lastMinigameScore = 0;
             GameModeManager.Instance.currentMode = GameModeManager.GameMode.Easy;
             GameModeManager.Instance.minigamesCompletedInMode = 0;
-            Debug.Log("[StartButton] Game state reset to Easy mode");
+            Debug.Log("[StartButton] Game state reset to Easy mode (no hearts system)");
         }
 
         // Load Opening Scene (train animation - only at game start)
