@@ -420,20 +420,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be7a1c6b4f8da944a9c69b7c18c16215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lives: 3
   score: 0
   lastMinigameScore: 0
   currentMode: 0
   minigamesCompletedInMode: 0
   gamesPerMode: 6
+  godModeGames: 10
   timer: 0
-  transitionScene: TempTransition
+  transitionScene: ModeDisplay
   gameStartScene: GameStart
   gameEndScene: GameEnd
-  scoreScene: ScoreScene
-  closingScene: ClosingScene
+  nameInputScene: NameInput
   landingPage: LandingPage
-  heartUIHandler: {fileID: 0}
   sceneDelay: 2.5
 --- !u!4 &206804684
 Transform:

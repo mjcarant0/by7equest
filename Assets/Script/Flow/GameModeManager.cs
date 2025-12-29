@@ -169,59 +169,13 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(gameStartScene);
     }
 
-    private IEnumerator ShowModeTransition(GameMode newMode) // fix transition controller 
+    private IEnumerator ShowModeTransition(GameMode newMode)
     {
         Debug.Log($"[GameModeManager] Showing transition to {newMode}");
         
-        // Load transition scene
         SceneManager.LoadScene(transitionScene);
-        yield return new WaitForSecondsRealtime(0.5f);
-
-        float waitTime = 0f;
-        float maxWaitTime = 3f;
-        while (TempTransitionController.Instance == null && waitTime < maxWaitTime)
-        {
-            yield return new WaitForSecondsRealtime(0.1f);
-            waitTime += 0.1f;
-        }
         
-        if (TempTransitionController.Instance == null)
-        {
-            Debug.LogError("[GameModeManager] TempTransitionController not found after waiting! Skipping transition.");
-            SceneManager.LoadScene(gameStartScene);
-            yield break;
-        }
-        
-        if (TempTransitionController.Instance.backgroundImage == null)
-        {
-            Debug.LogError("[GameModeManager] TempTransitionController backgroundImage not assigned! Skipping transition.");
-            SceneManager.LoadScene(gameStartScene);
-            yield break;
-        }
-
-        bool transitionComplete = false;
-        TempTransitionController.Instance.ShowTransition(newMode, () =>
-        {
-            transitionComplete = true;
-        });
-
-        // Wait for transition with timeout
-        float transitionWaitTime = 0f;
-        float transitionTimeout = 5f;
-        while (!transitionComplete && transitionWaitTime < transitionTimeout)
-        {
-            yield return new WaitForSecondsRealtime(0.1f);
-            transitionWaitTime += 0.1f;
-        }
-        
-        if (!transitionComplete)
-        {
-            Debug.LogWarning("[GameModeManager] Transition did not complete in time, continuing anyway");
-        }
-        
-        // After mode transition, go directly to Game Start
-        Debug.Log("[GameModeManager] Transition complete, loading Game Start");
-        SceneManager.LoadScene(gameStartScene);
+        yield break;
     }
 
     private GameMode AdvanceDifficulty()
