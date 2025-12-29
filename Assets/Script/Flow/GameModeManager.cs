@@ -8,14 +8,24 @@ public class GameModeManager : MonoBehaviour
 
     public enum GameMode { Easy, Medium, Hard, God }
 
-    [Header("Player Stats")]
+    [Header("Player Stats - Persistent Across Scenes")]
+    [Tooltip("HEART SYSTEM: Player health, starts at 3. Persists across all scenes.")]
     public int lives = 3;
+    
+    [Tooltip("Total accumulated score across all minigames and modes")]
     public int score = 0;
+    
+    [Tooltip("Score earned in the most recent minigame (for display purposes)")]
     public int lastMinigameScore = 0;
 
-    [Header("Difficulty Progression")]
+    [Header("Difficulty Progression - Game Loop Control")]
+    [Tooltip("Current difficulty mode (Easy→Medium→Hard→God)")]
     public GameMode currentMode = GameMode.Easy;
+    
+    [Tooltip("Tracks completed minigames in current mode. Resets to 0 when advancing modes.")]
     public int minigamesCompletedInMode = 0;
+    
+    [Tooltip("Required games per mode for Easy/Medium/Hard (default: 6). God mode has no limit.")]
     public int gamesPerMode = 6;
 
     [Header("Timer")]
@@ -61,7 +71,7 @@ public class GameModeManager : MonoBehaviour
         // Wait one frame to ensure all objects are loaded
         yield return null;
         
-        if (heartUIHandler == null)
+        if (heartUIHandler == null) // To Fix: Remove heart ui handler to Landing Page
         {
             heartUIHandler = FindObjectOfType<HeartUIHandler>();
             if (heartUIHandler == null)
@@ -121,11 +131,6 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(gameEndScene);
         yield return new WaitForSecondsRealtime(sceneDelay); 
 
-        // Show Score Scene
-        Debug.Log("[GameModeManager] Loading Score Scene");
-        SceneManager.LoadScene(scoreScene);
-        yield return new WaitForSecondsRealtime(sceneDelay);
-
         // Check if game is over (no lives left)
         if (lives <= 0)
         {
@@ -134,7 +139,12 @@ public class GameModeManager : MonoBehaviour
                 heartUIHandler.HideHearts();
             }
             
-            Debug.Log("[GameModeManager] Game Over! Loading Closing Scene");
+            Debug.Log("[GameModeManager] Game Over! Loading Score Scene then Closing Scene");
+            
+            // Show Score Scene only at final game over
+            SceneManager.LoadScene(scoreScene);
+            yield return new WaitForSecondsRealtime(sceneDelay);
+            
             SceneManager.LoadScene(closingScene);
             yield break;
         }
@@ -145,31 +155,31 @@ public class GameModeManager : MonoBehaviour
         // Check if we need to advance difficulty
         if (minigamesCompletedInMode >= gamesPerMode)
         {
-            minigamesCompletedInMode = 0;
-            
             if (currentMode != GameMode.God)
             {
                 // Advance to next difficulty
-                GameMode nextMode = AdvanceDifficulty();
-                Debug.Log($"[GameModeManager] Advancing difficulty from {currentMode} to {nextMode}");
+                GameMode previousMode = currentMode;
+                minigamesCompletedInMode = 0; // Reset counter for new mode
+                AdvanceDifficulty();
+                Debug.Log($"[GameModeManager] Completed {gamesPerMode} games in {previousMode}, advancing to {currentMode}");
                 
                 // Show transition, then it will load Game Start
-                yield return StartCoroutine(ShowModeTransition(nextMode));
+                yield return StartCoroutine(ShowModeTransition(currentMode));
                 yield break;
             }
             else
             {
-                // Already in God mode, just continue
-                Debug.Log($"[GameModeManager] Completed {gamesPerMode} games in God mode, continuing in God mode");
+                // Already in God mode, just continue (no game limit in God mode)
+                Debug.Log($"[GameModeManager] In God mode, continuing...");
             }
         }
 
         // Continue in current mode - go directly to Game Start
-        Debug.Log($"[GameModeManager] Continuing in {currentMode} mode, loading Game Start");
+        Debug.Log($"[GameModeManager] Continuing in {currentMode} mode ({minigamesCompletedInMode}/{gamesPerMode}), loading Game Start");
         SceneManager.LoadScene(gameStartScene);
     }
 
-    private IEnumerator ShowModeTransition(GameMode newMode)
+    private IEnumerator ShowModeTransition(GameMode newMode) // fix transition controller 
     {
         Debug.Log($"[GameModeManager] Showing transition to {newMode}");
         
