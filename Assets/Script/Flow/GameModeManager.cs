@@ -33,7 +33,7 @@ public class GameModeManager : MonoBehaviour
     private bool timerRunning;
 
     [Header("Scene Names")]
-    public string transitionScene = "TempTransition";
+    public string transitionScene = "ModeDisplay";
     public string gameStartScene = "GameStart"; 
     public string gameEndScene = "GameEnd";
     public string scoreScene = "ScoreScene";
@@ -102,7 +102,6 @@ public class GameModeManager : MonoBehaviour
             // Mode complete!
             if (currentMode == GameMode.God)
             {
-                // God mode complete - GAME IS FINISHED!
                 Debug.Log("[GameModeManager] God mode complete! Game finished. Starting end sequence.");
                 yield return StartCoroutine(ShowEndSequence());
                 yield break;
