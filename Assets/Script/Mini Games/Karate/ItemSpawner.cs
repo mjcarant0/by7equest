@@ -43,7 +43,7 @@ public class ItemSpawner : MonoBehaviour
 
     void SpawnItem(int index)
     {
-        bool isWood = Random.value < 0.5f;
+        bool isWood = Random.value < 0.7f; 
         GameObject prefab = isWood ? woodPrefab : stonePrefab;
         Vector3 spawnPos = transform.position + new Vector3(0, index * itemSpacing, 0);
         GameObject newItem = Instantiate(prefab, spawnPos, Quaternion.identity);

@@ -2,29 +2,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
-/// <summary>
-/// Game Flow Manager - Controls progression through all difficulty modes
-/// 
-/// PERSISTENCE: Uses DontDestroyOnLoad singleton pattern to persist across ALL scenes
-/// 
-/// NO HEART SYSTEM: Player progresses through all modes regardless of performance
-/// 
-/// GAME LOOP LOGIC:
-/// Easy/Medium/Hard Modes:
-///   - Each mode requires exactly 6 minigames
-///   - After 6th game, triggers TempTransition to next mode
-///   - Counter resets when advancing to next mode
-/// 
-/// God Mode:
-///   - Plays exactly 10 minigames
-///   - After 10th game, game is complete
-///   - Goes directly to NameInput scene
-/// 
-/// SCENE FLOW:
-/// Normal: GameEnd → GameStart (next minigame)
-/// Mode Complete: GameEnd → TempTransition → GameStart (new mode)
-/// Game Complete: GameEnd → NameInput (save score)
-/// </summary>
 public class GameModeManager : MonoBehaviour
 {
     public static GameModeManager Instance;
@@ -59,6 +36,8 @@ public class GameModeManager : MonoBehaviour
     public string transitionScene = "TempTransition";
     public string gameStartScene = "GameStart"; 
     public string gameEndScene = "GameEnd";
+    public string scoreScene = "ScoreScene";
+    public string closingScene = "ClosingScene";
     public string nameInputScene = "NameInput";
     public string landingPage = "LandingPage";
 
@@ -80,15 +59,6 @@ public class GameModeManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Main minigame resolution handler - Called when a minigame ends
-    /// 
-    /// NO HEART SYSTEM: Success/failure only affects score, not progression
-    /// SCORING: Calculates score based on success, time bonus, and current mode
-    /// FLOW: Triggers PostGameSequence which handles all subsequent logic
-    /// </summary>
-    /// <param name="success">Did the player win the minigame?</param>
-    /// <param name="timeBonus">Bonus points for completing quickly</param>
     public void ResolveMinigame(bool success, int timeBonus = 0)
     {
         if (Instance == null)
@@ -112,19 +82,6 @@ public class GameModeManager : MonoBehaviour
         StartCoroutine(PostGameSequence());
     }
 
-    /// <summary>
-    /// Post-Game Sequence - Controls entire game flow after minigame completion
-    /// 
-    /// FLOW LOGIC:
-    /// 1. Load GameEnd scene (shows result)
-    /// 2. Increment minigamesCompletedInMode counter
-    /// 3. For Easy/Medium/Hard: Check if 6 games completed
-    ///    - YES: Show TempTransition → Advance mode → GameStart
-    ///    - NO: Load GameStart (continue current mode)
-    /// 4. For God Mode: Check if 10 games completed
-    ///    - YES: Game Complete! → Load NameInput scene
-    ///    - NO: Load GameStart (continue God mode)
-    /// </summary>
     private IEnumerator PostGameSequence()
     {
         Debug.Log("[GameModeManager] Starting post-game sequence");
@@ -146,15 +103,15 @@ public class GameModeManager : MonoBehaviour
             if (currentMode == GameMode.God)
             {
                 // God mode complete - GAME IS FINISHED!
-                Debug.Log("[GameModeManager] God mode complete! Game finished. Going to NameInput scene.");
-                SceneManager.LoadScene(nameInputScene);
+                Debug.Log("[GameModeManager] God mode complete! Game finished. Starting end sequence.");
+                yield return StartCoroutine(ShowEndSequence());
                 yield break;
             }
             else
             {
                 // Easy/Medium/Hard complete - advance to next mode
                 GameMode previousMode = currentMode;
-                minigamesCompletedInMode = 0; // Reset counter for new mode
+                minigamesCompletedInMode = 0; 
                 AdvanceDifficulty();
                 Debug.Log($"[GameModeManager] Completed {requiredGames} games in {previousMode}, advancing to {currentMode}");
                 
@@ -176,6 +133,25 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(transitionScene);
         
         yield break;
+    }
+
+    private IEnumerator ShowEndSequence()
+    {
+        Debug.Log("[GameModeManager] Starting end sequence: ScoreScene → ClosingScene → NameInput → LandingPage");
+        
+        // ScoreScene
+        Debug.Log("[GameModeManager] Loading ScoreScene");
+        SceneManager.LoadScene(scoreScene);
+        yield return new WaitForSecondsRealtime(sceneDelay);
+        
+        // ClosingScene
+        Debug.Log("[GameModeManager] Loading ClosingScene");
+        SceneManager.LoadScene(closingScene);
+        yield return new WaitForSecondsRealtime(sceneDelay);
+        
+        // NameInput
+        Debug.Log("[GameModeManager] Loading NameInput");
+        SceneManager.LoadScene(nameInputScene);
     }
 
     private GameMode AdvanceDifficulty()

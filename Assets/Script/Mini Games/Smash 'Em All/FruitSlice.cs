@@ -46,8 +46,8 @@ public class FruitSlice : MonoBehaviour
         if (sliceVFXPrefab != null)
             Instantiate(sliceVFXPrefab, transform.position, Quaternion.identity);
 
-        if (GameManager.Instance != null)
-            GameManager.Instance.FruitSliced();
+        if (SmashEmAllManager.Instance != null)
+            SmashEmAllManager.Instance.FruitSliced();
 
         DisableSlicing();
     }

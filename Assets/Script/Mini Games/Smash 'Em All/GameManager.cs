@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class SmashEmAllManager : MonoBehaviour
 {
-    public static GameManager Instance;
+    public static SmashEmAllManager Instance;
 
     public int sliceGoal = 10;
     private int currentSlices;
@@ -27,6 +27,9 @@ public class GameManager : MonoBehaviour
     {
         currentSlices = 0;
         gameEnded = false;
+
+        // Reset static state for SliceEmAll
+        MoveAlongConveyor.ResetSliceEmAll();
 
         if (GameModeManager.Instance != null)
             timer = timeLimit;

@@ -44,8 +44,8 @@ public class BombExplode : MonoBehaviour
             Destroy(explosion, 1f);
         }
 
-        if (GameManager.Instance != null)
-            GameManager.Instance.LoseGame();
+        if (SmashEmAllManager.Instance != null)
+            SmashEmAllManager.Instance.LoseGame();
 
         DisableExplosion();
         Destroy(gameObject);
