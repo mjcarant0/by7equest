@@ -14,6 +14,7 @@ namespace Flow
         public float frameDelay = 0.08f;
         
         [Header("Zoom Out Effect")]
+        public bool zoomOnLastFrame = true;
         public float endScale = 2.5f;
         public float zoomDuration = 0.5f;
         
@@ -58,65 +59,69 @@ namespace Flow
             StartCoroutine(PlayAnimation());
         }
 
-            IEnumerator PlayAnimation()
-    {
-        // Step 1: Start the Zoom Out
-        yield return StartCoroutine(ZoomOut());
-        
-        // NEW: Activate the title and description BEFORE the doors start opening
-        if (currentTitleObject != null)
+        IEnumerator PlayAnimation()
         {
-            currentTitleObject.SetActive(true);
-        }
-        
-        if (titleText != null)
-        {
-            titleText.gameObject.SetActive(true);
-        }
+            // STEP 0: Activate title/description immediately (outside doors)
+            if (currentTitleObject != null)
+                currentTitleObject.SetActive(true);
 
-        // Start fading in the UI while the doors are opening
-        StartCoroutine(FadeTitle(0f, 1f, titleFadeInDuration));
+            if (titleText != null)
+                titleText.gameObject.SetActive(true);
 
-        // Step 2: Play door opening animation
-        for (int i = 0; i < doorFrames.Length; i++)
-        {
-            sr.sprite = doorFrames[i];
-            yield return new WaitForSeconds(frameDelay);
-        }
-        
-        // Step 3: Wait for the display duration
-        yield return new WaitForSeconds(titleDisplayDuration);
-        
-        // Fade out the UI before the countdown starts
-        yield return StartCoroutine(FadeTitle(1f, 0f, titleFadeInDuration));
-        
-        if (titleText != null) titleText.gameObject.SetActive(false);
-        if (currentTitleObject != null) currentTitleObject.SetActive(false);
-        
-        // Step 4: Play countdown
-        if (countdownSprites != null && countdownSprites.Length > 0)
-        {
-            for (int i = 0; i < countdownSprites.Length; i++)
+            // Start fade-in of title (non-blocking)
+            StartCoroutine(FadeTitle(0f, 1f, titleFadeInDuration));
+
+            // STEP 1: Play door opening animation frame by frame
+            for (int i = 0; i < doorFrames.Length; i++)
             {
-                sr.sprite = countdownSprites[i];
-                yield return new WaitForSeconds(countdownDelay);
+                sr.sprite = doorFrames[i];
+                yield return new WaitForSeconds(frameDelay);
             }
+
+            // STEP 2: Zoom on last frame of door
+            if (zoomOnLastFrame)
+            {
+                yield return StartCoroutine(ZoomOut());
+            }
+
+            // STEP 3: Wait for title display duration
+            yield return new WaitForSeconds(titleDisplayDuration);
+
+            // STEP 4: Fade out title/description
+            yield return StartCoroutine(FadeTitle(1f, 0f, titleFadeInDuration));
+
+            if (titleText != null)
+                titleText.gameObject.SetActive(false);
+            if (currentTitleObject != null)
+                currentTitleObject.SetActive(false);
+
+            // STEP 5: Play countdown if any
+            if (countdownSprites != null && countdownSprites.Length > 0)
+            {
+                for (int i = 0; i < countdownSprites.Length; i++)
+                {
+                    sr.sprite = countdownSprites[i];
+                    yield return new WaitForSeconds(countdownDelay);
+                }
+            }
+
+            // STEP 6: Notify animation finished
+            OnAnimationFinished?.Invoke();
         }
-        
-        OnAnimationFinished?.Invoke();
-    }
-        
+
         IEnumerator ZoomOut()
         {
             float elapsed = 0f;
             Vector3 start = originalScale;
             Vector3 end = originalScale * endScale;
+
             while (elapsed < zoomDuration)
             {
                 elapsed += Time.deltaTime;
                 transform.localScale = Vector3.Lerp(start, end, elapsed / zoomDuration);
                 yield return null;
             }
+            
             transform.localScale = end;
         }
         
@@ -130,7 +135,9 @@ namespace Flow
                     titleCanvasGroup.alpha = Mathf.Lerp(from, to, elapsed / duration);
                 yield return null;
             }
-            if (titleCanvasGroup != null) titleCanvasGroup.alpha = to;
+
+            if (titleCanvasGroup != null)
+                titleCanvasGroup.alpha = to;
         }
         
         public void SetTitle(string title)
