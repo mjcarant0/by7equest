@@ -430,6 +430,8 @@ MonoBehaviour:
   transitionScene: ModeDisplay
   gameStartScene: GameStart
   gameEndScene: GameEnd
+  scoreScene: ScoreScene
+  closingScene: ClosingScene
   nameInputScene: NameInput
   landingPage: LandingPage
   sceneDelay: 2.5
@@ -868,6 +870,51 @@ Transform:
   - {fileID: 1443912160}
   - {fileID: 1982176708}
   m_Father: {fileID: 35658587}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1045729957
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1045729959}
+  - component: {fileID: 1045729958}
+  m_Layer: 0
+  m_Name: StartButton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1045729958
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1045729957}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffba2c97ab1744c4b866c5a0865e00bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  uiElementsToHide: []
+--- !u!4 &1045729959
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1045729957}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.7024636, y: 1.6863564, z: -0.00808494}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1114223470
 GameObject:
@@ -1619,3 +1666,4 @@ SceneRoots:
   - {fileID: 1952983720}
   - {fileID: 206804684}
   - {fileID: 374044758}
+  - {fileID: 1045729959}

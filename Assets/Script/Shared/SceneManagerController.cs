@@ -15,9 +15,10 @@ public class SceneManagerController : MonoBehaviour
         SceneManager.LoadScene("CreditsPage");
     }
 
-    // Function to load the LandingPage
-    public void LoadLandingPage()
+    // Function to load the LandingPage (ng exit button)
+    public void OnExitButtonClicked()
     {
+        Debug.Log("[ScoreDisplayController] Exit button clicked, returning to Landing Page");
         SceneManager.LoadScene("LandingPage");
     }
 

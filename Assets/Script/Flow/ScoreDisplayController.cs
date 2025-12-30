@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class ScoreDisplayController : MonoBehaviour
@@ -27,6 +28,7 @@ public class ScoreDisplayController : MonoBehaviour
         DisplayScore();
     }
 
+    // DITO IEDIT YUNG LOGIC NG SCORE, DRAFT LANG ITO DAHIL SA NAGAWA KO LAST TIME
     private void DisplayScore()
     {
         int lastScore = GameModeManager.Instance.lastMinigameScore;

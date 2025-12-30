@@ -36,7 +36,7 @@ public class GameModeManager : MonoBehaviour
     public string transitionScene = "ModeDisplay";
     public string gameStartScene = "GameStart"; 
     public string gameEndScene = "GameEnd";
-    public string scoreScene = "ScoreScene";
+    public string scoreScene = "ScoreScene"; // needed parin despite na wala na sa flow
     public string closingScene = "ClosingScene";
     public string nameInputScene = "NameInput";
     public string landingPage = "LandingPage";
@@ -136,12 +136,7 @@ public class GameModeManager : MonoBehaviour
 
     private IEnumerator ShowEndSequence()
     {
-        Debug.Log("[GameModeManager] Starting end sequence: ScoreScene → ClosingScene → NameInput → LandingPage");
-        
-        // ScoreScene
-        Debug.Log("[GameModeManager] Loading ScoreScene");
-        SceneManager.LoadScene(scoreScene);
-        yield return new WaitForSecondsRealtime(sceneDelay);
+        Debug.Log("[GameModeManager] Starting end sequence: ClosingScene → NameInput → LandingPage");
         
         // ClosingScene
         Debug.Log("[GameModeManager] Loading ClosingScene");
@@ -276,5 +271,11 @@ public class GameModeManager : MonoBehaviour
     {
         Debug.Log("[GameModeManager] Loading Game Start Scene");
         SceneManager.LoadScene(gameStartScene);
+    }
+
+    public void LoadScoreSceneFromMenu()
+    {
+        Debug.Log("[GameModeManager] Loading Score Scene from menu");
+        SceneManager.LoadScene(scoreScene);
     }
 }
