@@ -15,6 +15,9 @@ public class GameEndAnimation : MonoBehaviour
     public float startScale = 2.5f;
     public float zoomDuration = 0.5f;
 
+    [Header("Door Open Delay")]
+    public float doorOpenDelay = 1f;
+
     private SpriteRenderer sr;
     private Vector3 originalScale;
 
@@ -40,14 +43,23 @@ public class GameEndAnimation : MonoBehaviour
             return;
         }
 
+        // Set the first frame immediately
+        sr.sprite = frames[0];
+
+        // Start the animation coroutine
         StartCoroutine(PlayAnimation());
     }
 
     IEnumerator PlayAnimation()
     {
+        // 1. Hold the first frame (door fully open) before zoom
+        yield return new WaitForSeconds(doorOpenDelay);
+
+        // 2. Zoom out while door is still fully open
         yield return StartCoroutine(ZoomOut());
 
-        for (int i = 0; i < frames.Length; i++)
+        // 3. Play the closing frames
+        for (int i = 1; i < frames.Length; i++)
         {
             sr.sprite = frames[i];
             yield return new WaitForSeconds(frameDelay);
