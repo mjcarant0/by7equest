@@ -148,9 +148,9 @@ Transform:
   m_LocalScale: {x: 108, y: 108, z: 108}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 630350567}
   - {fileID: 538186189}
   - {fileID: 1609571365}
-  - {fileID: 630350567}
   m_Father: {fileID: 1079393476}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
@@ -301,7 +301,7 @@ GameObject:
   - component: {fileID: 538186189}
   - component: {fileID: 538186190}
   m_Layer: 0
-  m_Name: 1
+  m_Name: 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -472,7 +472,7 @@ GameObject:
   - component: {fileID: 630350567}
   - component: {fileID: 630350568}
   m_Layer: 0
-  m_Name: 3
+  m_Name: 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -741,8 +741,8 @@ Transform:
   m_GameObject: {fileID: 1050226233}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.073055, y: 0.22562, z: 22.500008}
-  m_LocalScale: {x: 0.9461112, y: 0.9461112, z: 0.9461112}
+  m_LocalPosition: {x: 0.0974074, y: 0.3008333, z: 0.00001525879}
+  m_LocalScale: {x: 0.9259259, y: 0.9259259, z: 0.9259259}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
@@ -790,7 +790,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 0
   m_Sprite: {fileID: -3334725906239253629, guid: d2882ff4037e5cb4ca2b07957fbb2cf2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -826,6 +826,7 @@ MonoBehaviour:
   loop: 0
   startScale: 2.5
   zoomDuration: 0.5
+  doorOpenDelay: 1
 --- !u!1 &1079393472
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,6 +932,62 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &1242951948
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1242951950}
+  - component: {fileID: 1242951949}
+  m_Layer: 0
+  m_Name: HeartUIHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1242951949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1242951948}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06c641cd0099f904896365bf8f7efb7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  coloredHearts:
+  - {fileID: 1659953031}
+  - {fileID: 1651128439}
+  - {fileID: 1025774283}
+  bwHearts:
+  - {fileID: 630350568}
+  - {fileID: 538186190}
+  - {fileID: 1609571366}
+  maxLives: 3
+  coloredHeartsRootName: Hearts
+  bwHeartsRootName: Hearts BW
+  debugLogs: 1
+--- !u!4 &1242951950
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1242951948}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.8258741, y: 0.034119226, z: 0.03409808}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1270110517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1134,9 +1191,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be6d94b1b1dc6584686ebb4ac5563bc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  scoreText: {fileID: 0}
-  totalScoreText: {fileID: 0}
-  modeText: {fileID: 0}
 --- !u!114 &1502834790
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1295,7 +1349,7 @@ GameObject:
   - component: {fileID: 1609571365}
   - component: {fileID: 1609571366}
   m_Layer: 0
-  m_Name: 2
+  m_Name: 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1675,3 +1729,4 @@ SceneRoots:
   - {fileID: 832268779}
   - {fileID: 1517515922}
   - {fileID: 1050226234}
+  - {fileID: 1242951950}

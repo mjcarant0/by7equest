@@ -1,125 +1,273 @@
 using UnityEngine;
-using UnityEngine.UI;
+using System.Linq;
+using UnityEngine.SceneManagement;
 
 public class HeartUIHandler : MonoBehaviour
 {
-    [Header("UI References")]
-    [Tooltip("Drag your heart Image components here (up to 3 for 3 lives)")]
-    public Image[] heartIcons; 
+    // Shared life state across scenes; handlers can exist in multiple scenes.
+    private static int sharedLives;
+    private static bool sharedInitialized;
 
-    [Header("Sprite Assets")]
-    [Tooltip("Drag your full heart sprite from the Drive here")]
-    public Sprite fullHeart;    
-    [Tooltip("Drag your empty heart sprite from the Drive here")]
-    public Sprite emptyHeart;
+    [Header("Colored Hearts (Hearts GameObject)")]
+    public SpriteRenderer[] coloredHearts;
 
-    private CanvasGroup canvasGroup;
+    [Header("Black & White Hearts (Hearts BW GameObject)")]
+    public SpriteRenderer[] bwHearts;
+
+    [Header("Config")]
+    public int maxLives = 3;
+
+    [Header("Reference Discovery")]
+    [Tooltip("Name of the GameObject that contains colored heart sprites in each scene")]
+    public string coloredHeartsRootName = "Hearts";
+
+    [Tooltip("Name of the GameObject that contains BW heart sprites in each scene")]
+    public string bwHeartsRootName = "Hearts BW";
+
+    [Header("Debug")]
+    [Tooltip("Enable verbose logging for heart state changes")]
+    public bool debugLogs = false;
+
+    private int currentLives;
+
+    private void OnValidate()
+    {
+        // Clamp maxLives to available heart pairs to avoid indexing issues in editor.
+        if (coloredHearts != null && bwHearts != null)
+        {
+            int limit = Mathf.Min(coloredHearts.Length, bwHearts.Length);
+            if (maxLives > limit) maxLives = limit;
+        }
+    }
 
     private void Awake()
     {
-        canvasGroup = GetComponent<CanvasGroup>();
-        if (canvasGroup == null)
+        // Initialize shared lives once so first scene shows hearts immediately.
+        if (!sharedInitialized)
         {
-            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            sharedLives = maxLives;
+            sharedInitialized = true;
         }
-        
-        HideHearts();
+
+        currentLives = sharedLives;
+
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        if (debugLogs) Debug.Log("[HeartUIHandler] Awake and registered sceneLoaded");
+
+        EnsureHeartReferences(forceRefresh: false);
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     private void Start()
     {
-        ValidateSetup();
+        if (debugLogs) Debug.Log("[HeartUIHandler] Start → Sync from shared");
+        currentLives = sharedLives;
+        UpdateHearts();
     }
 
-    private void ValidateSetup()
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (heartIcons == null || heartIcons.Length == 0)
+        if (GameModeManager.Instance == null) return;
+
+        if (debugLogs) Debug.Log($"[HeartUIHandler] OnSceneLoaded: {scene.name} | currentLives={currentLives}");
+
+        // Keep existing assignment; refresh only if missing.
+        EnsureHeartReferences(forceRefresh: false);
+
+        if (scene.name == GameModeManager.Instance.landingPage)
         {
-            Debug.LogError("[HeartUIHandler] No heart icons assigned! Please assign Image components in the Inspector.");
-            return;
+            if (debugLogs) Debug.Log("[HeartUIHandler] Landing page loaded → ResetLives");
+            ResetLives();
         }
 
-        if (fullHeart == null)
+        if (scene.name == GameModeManager.Instance.gameEndScene)
         {
-            Debug.LogError("[HeartUIHandler] Full heart sprite not assigned! Please assign the sprite from your Drive.");
+            if (debugLogs) Debug.Log("[HeartUIHandler] GameEnd loaded → HandleMinigameResult");
+            HandleMinigameResult();
         }
 
-        if (emptyHeart == null)
+        // Keep visuals in sync when entering any scene that has hearts visible.
+        UpdateHearts();
+    }
+
+    private void HandleMinigameResult()
+    {
+        if (GameModeManager.Instance.lastMinigameScore == 0)
         {
-            Debug.LogError("[HeartUIHandler] Empty heart sprite not assigned! Please assign the sprite from your Drive.");
+            if (debugLogs) Debug.Log("[HeartUIHandler] Minigame failed → LoseLife");
+            LoseLife();
+        }
+        else if (debugLogs)
+        {
+            Debug.Log("[HeartUIHandler] Minigame success → no life lost");
+        }
+    }
+
+    private void ResetLives()
+    {
+        if (!EnsureHeartReferences()) return;
+
+        sharedLives = maxLives;
+        currentLives = sharedLives;
+
+        for (int i = 0; i < maxLives; i++)
+        {
+            coloredHearts[i].gameObject.SetActive(true);
+            bwHearts[i].gameObject.SetActive(false);
         }
 
-        for (int i = 0; i < heartIcons.Length; i++)
+        // If additional hearts exist in arrays beyond maxLives, hide them.
+        for (int i = maxLives; i < coloredHearts.Length; i++)
         {
-            if (heartIcons[i] == null)
+            coloredHearts[i].gameObject.SetActive(false);
+        }
+        for (int i = maxLives; i < bwHearts.Length; i++)
+        {
+            bwHearts[i].gameObject.SetActive(false);
+        }
+
+        if (debugLogs) Debug.Log($"[HeartUIHandler] ResetLives → currentLives={currentLives}, maxLives={maxLives}");
+    }
+
+    private void LoseLife()
+    {
+        if (!EnsureHeartReferences()) return;
+
+        sharedLives = Mathf.Max(0, sharedLives - 1);
+        currentLives = sharedLives;
+        if (debugLogs) Debug.Log($"[HeartUIHandler] LoseLife → currentLives={currentLives}");
+        UpdateHearts();
+
+        // Stop run if no lives left
+        if (currentLives <= 0 && GameModeManager.Instance != null)
+        {
+            if (debugLogs) Debug.Log("[HeartUIHandler] Lives depleted → ending run");
+            GameModeManager.Instance.FinalizeSession("Anonymous");
+        }
+    }
+
+    private void UpdateHearts()
+    {
+        if (!EnsureHeartReferences()) return;
+
+        for (int i = 0; i < maxLives; i++)
+        {
+            if (i >= coloredHearts.Length || i >= bwHearts.Length)
             {
-                Debug.LogError($"[HeartUIHandler] Heart icon at index {i} is null! Please assign all Image components.");
-            }
-        }
-
-        Debug.Log($"[HeartUIHandler] Setup validated: {heartIcons.Length} heart icons, Full sprite: {fullHeart != null}, Empty sprite: {emptyHeart != null}");
-    }
-
-    public void ShowHearts()
-    {
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 1f;
-            canvasGroup.interactable = true;
-            canvasGroup.blocksRaycasts = true;
-        }
-        Debug.Log("[HeartUIHandler] Hearts shown");
-    }
-
-    public void HideHearts()
-    {
-        if (canvasGroup != null)
-        {
-            canvasGroup.alpha = 0f;
-            canvasGroup.interactable = false;
-            canvasGroup.blocksRaycasts = false;
-        }
-        Debug.Log("[HeartUIHandler] Hearts hidden");
-    }
-
-    public void UpdateHearts(int currentLives)
-    {
-        if (heartIcons == null || heartIcons.Length == 0)
-        {
-            Debug.LogWarning("[HeartUIHandler] Cannot update hearts - no icons assigned!");
-            return;
-        }
-
-        Debug.Log($"[HeartUIHandler] Updating hearts display for {currentLives} lives");
-
-        for (int i = 0; i < heartIcons.Length; i++)
-        {
-            if (heartIcons[i] == null)
-            {
-                Debug.LogWarning($"[HeartUIHandler] Heart icon at index {i} is null!");
+                if (debugLogs) Debug.LogWarning($"[HeartUIHandler] Index {i} out of bounds for hearts arrays");
                 continue;
             }
 
             if (i < currentLives)
             {
-                // Show full heart
-                if (fullHeart != null)
-                {
-                    heartIcons[i].sprite = fullHeart;
-                    heartIcons[i].color = Color.white; // Ensure full opacity
-                }
-                heartIcons[i].enabled = true;
+                coloredHearts[i].gameObject.SetActive(true);
+                coloredHearts[i].enabled = true;
+                bwHearts[i].gameObject.SetActive(false);
+                bwHearts[i].enabled = false;
             }
             else
             {
-                // Show empty heart
-                if (emptyHeart != null)
-                {
-                    heartIcons[i].sprite = emptyHeart;
-                    heartIcons[i].color = new Color(1f, 1f, 1f, 0.5f); // Slightly transparent
-                }
-                heartIcons[i].enabled = true;
+                coloredHearts[i].gameObject.SetActive(false);
+                coloredHearts[i].enabled = false;
+                bwHearts[i].gameObject.SetActive(true);
+                bwHearts[i].enabled = true;
             }
         }
+
+        if (debugLogs) Debug.Log($"[HeartUIHandler] UpdateHearts done. currentLives={currentLives}");
+    }
+
+    private bool EnsureHeartReferences(bool forceRefresh = false)
+    {
+        bool valid = ArraysValid();
+        if (!valid || forceRefresh)
+        {
+            TryRefreshHeartReferences();
+            valid = ArraysValid();
+        }
+
+        if (!valid && debugLogs)
+        {
+            string sceneName = SceneManager.GetActiveScene().name;
+            bool expectHearts = GameModeManager.Instance != null &&
+                                (sceneName == GameModeManager.Instance.gameStartScene ||
+                                 sceneName == GameModeManager.Instance.gameEndScene);
+
+            if (expectHearts)
+            {
+                Debug.LogWarning("[HeartUIHandler] Heart references missing; ensure hearts exist in scene or names are correct.");
+            }
+        }
+
+        // Clamp maxLives to available pairs after refresh
+        if (coloredHearts != null && bwHearts != null)
+        {
+            int limit = Mathf.Min(coloredHearts.Length, bwHearts.Length);
+            if (maxLives > limit) maxLives = limit;
+        }
+
+        return valid;
+    }
+
+    private bool ArraysValid()
+    {
+        return coloredHearts != null && bwHearts != null &&
+               coloredHearts.Length > 0 && bwHearts.Length > 0 &&
+               coloredHearts.All(r => r != null) && bwHearts.All(r => r != null);
+    }
+
+    private void TryRefreshHeartReferences()
+    {
+        // Prefer roots in the active scene to avoid mixing with DontDestroyOnLoad objects.
+        Scene activeScene = SceneManager.GetActiveScene();
+        GameObject coloredRoot = FindInScene(activeScene, coloredHeartsRootName);
+        GameObject bwRoot = FindInScene(activeScene, bwHeartsRootName);
+
+        // Fallback to global find if not found in-scene.
+        if (coloredRoot == null) coloredRoot = GameObject.Find(coloredHeartsRootName);
+        if (bwRoot == null) bwRoot = GameObject.Find(bwHeartsRootName);
+
+        if (coloredRoot != null)
+        {
+            // Keep natural hierarchy order (no reordering) so inspector element order is preserved.
+            coloredHearts = coloredRoot.GetComponentsInChildren<SpriteRenderer>(true).ToArray();
+        }
+
+        if (bwRoot != null)
+        {
+            bwHearts = bwRoot.GetComponentsInChildren<SpriteRenderer>(true).ToArray();
+        }
+
+        if (debugLogs)
+        {
+            Debug.Log($"[HeartUIHandler] Refreshed hearts. Colored found: {coloredHearts?.Length ?? 0}, BW found: {bwHearts?.Length ?? 0}");
+        }
+    }
+
+    private GameObject FindInScene(Scene scene, string name)
+    {
+        if (!scene.IsValid()) return null;
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            var t = FindChildByName(root.transform, name);
+            if (t != null) return t.gameObject;
+        }
+        return null;
+    }
+
+    private Transform FindChildByName(Transform parent, string name)
+    {
+        if (parent.name == name) return parent;
+        for (int i = 0; i < parent.childCount; i++)
+        {
+            var found = FindChildByName(parent.GetChild(i), name);
+            if (found != null) return found;
+        }
+        return null;
     }
 }
