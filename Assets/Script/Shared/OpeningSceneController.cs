@@ -13,7 +13,7 @@ public class OpeningSceneController : MonoBehaviour
     public string animationName = "TrainAnimation";  
     
     [Header("Wait Time (seconds)")]
-    public float displayDuration = 3f;
+    public float displayDuration = 7f;
     public bool waitForAnimation = true; 
 
     void Start()

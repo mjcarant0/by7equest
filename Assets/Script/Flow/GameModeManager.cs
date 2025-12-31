@@ -22,8 +22,8 @@ public class GameModeManager : MonoBehaviour
     [Tooltip("Tracks completed minigames in current mode. Resets to 0 when advancing modes.")]
     public int minigamesCompletedInMode = 0;
 
-    [Tooltip("Required games per mode for Easy/Medium/Hard (mechanic: 3)")]
-    public int gamesPerMode = 3;
+    [Tooltip("Required games per mode for Easy/Medium/Hard (mechanic: 6)")]
+    public int gamesPerMode = 6;
 
     [Tooltip("God mode is unlimited; this is ignored")]
     public int godModeGames = 0;
@@ -31,6 +31,7 @@ public class GameModeManager : MonoBehaviour
     [Header("Timer")]
     public float timer;
     private bool timerRunning;
+    private bool isGameOver = false;
 
     [Header("Scene Names")]
     public string transitionScene = "ModeDisplay";
@@ -42,6 +43,10 @@ public class GameModeManager : MonoBehaviour
     public string landingPage = "LandingPage";
 
     public float sceneDelay = 2.5f;
+
+    [Header("Closing Scene Video")]
+    [Tooltip("Duration to wait for the closing scene video before loading NameInput")]
+    public float closingSceneVideoDuration = 5f;
 
     private void Awake()
     {
@@ -96,6 +101,13 @@ public class GameModeManager : MonoBehaviour
         SceneManager.LoadScene(gameEndScene);
         yield return new WaitForSecondsRealtime(sceneDelay);
 
+        // Check if game is over (no lives left) - this will be set by HeartUIHandler
+        if (isGameOver)
+        {
+            Debug.Log("[GameModeManager] Game Over detected, PostGameSequence stopping - FinalizeSession will handle end sequence");
+            yield break;
+        }
+
         minigamesCompletedInMode++;
         Debug.Log($"[GameModeManager] Completed {minigamesCompletedInMode} games in {currentMode} mode");
 
@@ -136,14 +148,15 @@ public class GameModeManager : MonoBehaviour
 
     private IEnumerator ShowEndSequence()
     {
-        Debug.Log("[GameModeManager] Starting end sequence: ClosingScene → NameInput → LandingPage");
+        Debug.Log("[GameModeManager] Starting end sequence: GameEnd → ClosingScene (ClosingScene will handle progression to NameInput)");
 
-        Debug.Log("[GameModeManager] Loading ClosingScene");
-        SceneManager.LoadScene(closingScene);
+        // GameEnd is already loaded by PostGameSequence, wait for it to display
+        Debug.Log("[GameModeManager] GameEnd showing (score displayed)");
         yield return new WaitForSecondsRealtime(sceneDelay);
 
-        Debug.Log("[GameModeManager] Loading NameInput");
-        SceneManager.LoadScene(nameInputScene);
+        Debug.Log("[GameModeManager] Loading ClosingScene - video will play and handle NameInput transition");
+        SceneManager.LoadScene(closingScene);
+        // ClosingScene controller will load NameInput when its video finishes
     }
 
     private GameMode AdvanceDifficulty()
@@ -178,21 +191,32 @@ public class GameModeManager : MonoBehaviour
         MinigameRandomizer.Instance.LoadNextMinigame();
     }
 
-    public void FinalizeSession(string playerName)
+    public void FinalizeSession(string playerName = "")
     {
-        if (string.IsNullOrEmpty(playerName))
+        if (isGameOver)
         {
-            Debug.LogWarning("[GameModeManager] Player name is empty, using Anonymous");
-            playerName = "Anonymous";
+            Debug.Log("[GameModeManager] FinalizeSession already called, ignoring duplicate");
+            return;
         }
 
-        Debug.Log($"[GameModeManager] Finalizing - Player: {playerName}, Score: {score}, Mode: {currentMode}");
+        isGameOver = true;
+        Debug.Log($"[GameModeManager] Game Over triggered! Score: {score}, Mode: {currentMode}");
 
-        SaveToDatabase(playerName, score, currentMode.ToString());
+        // Stop any running coroutines to prevent conflicts
+        StopAllCoroutines();
 
-        ResetGame();
-
-        SceneManager.LoadScene(landingPage);
+        // If called with player name (from NameInput scene), save and return to landing page
+        if (!string.IsNullOrEmpty(playerName))
+        {
+            SaveToDatabase(playerName, score, currentMode.ToString());
+            ResetGame();
+            SceneManager.LoadScene(landingPage);
+        }
+        else
+        {
+            // Called from HeartUIHandler when lives reach 0 - start end sequence
+            StartCoroutine(ShowEndSequence());
+        }
     }
 
     private void SaveToDatabase(string playerName, int finalScore, string modeReached)
@@ -207,6 +231,7 @@ public class GameModeManager : MonoBehaviour
         lastMinigameScore = 0;
         minigamesCompletedInMode = 0;
         currentMode = GameMode.Easy;
+        isGameOver = false;
     }
 
     public void StartTimerExternally()

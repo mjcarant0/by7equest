@@ -678,7 +678,8 @@ MonoBehaviour:
   karateDescription: {fileID: 0}
   simonSaysDescription: {fileID: 0}
   sliceEmAllDescription: {fileID: 0}
-  displayDuration: 6
+  videoPlayer: {fileID: 212419621}
+  nextSceneName: GameStart
 --- !u!4 &857015514
 Transform:
   m_ObjectHideFlags: 0

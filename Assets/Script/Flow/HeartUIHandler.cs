@@ -147,7 +147,7 @@ public class HeartUIHandler : MonoBehaviour
         if (currentLives <= 0 && GameModeManager.Instance != null)
         {
             if (debugLogs) Debug.Log("[HeartUIHandler] Lives depleted → ending run");
-            GameModeManager.Instance.FinalizeSession("Anonymous");
+            GameModeManager.Instance.FinalizeSession("");
         }
     }
 
