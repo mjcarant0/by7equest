@@ -26,6 +26,10 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     private int correctCount = 0;
     private int requiredCorrect;
 
+    public float timeLimit = 12f;
+    private float timer;
+    private bool gameEnded = false;
+
     void Start()
     {
         StartGame();
@@ -33,10 +37,21 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
     void StartGame()
     {
+        if (GameModeManager.Instance != null)
+        {
+            timer = timeLimit;
+            
+            // Adjust speed based on difficulty
+            float speedMultiplier = GetSpeedMultiplier();
+            commandTime /= speedMultiplier;
+            feedbackTime /= speedMultiplier;
+        }
+
         background.color = Color.black;
 
         mistakes = 0;
         correctCount = 0;
+        gameEnded = false;
 
         // Player needs 2–5 correct commands to win
         requiredCorrect = Random.Range(2, 6);
@@ -47,6 +62,21 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         AddRandomCommand();
 
         StartCoroutine(RunGame());
+    }
+
+    void Update()
+    {
+        if (gameEnded || GameModeManager.Instance == null) return;
+
+        timer -= Time.deltaTime;
+
+        if (timer <= 0f)
+        {
+            timer = 0f;
+            gameEnded = true;
+            commandDisplay.text = "";
+            GameModeManager.Instance.ResolveMinigame(false);
+        }
     }
 
     void AddRandomCommand()
@@ -85,20 +115,26 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             else
                 mistakes++;
 
-            yield return new WaitForSeconds(feedbackTime);
+            yield return new WaitForSecondsRealtime(feedbackTime);
             background.color = Color.black;
 
             // ❌ GAME OVER (3 mistakes)
             if (mistakes >= 3)
             {
+                gameEnded = true;
                 commandDisplay.text = "";
+                StopAllCoroutines();
+                GameModeManager.Instance.ResolveMinigame(false);
                 yield break;
             }
 
             // ✅ WIN (2–5 correct commands)
             if (correctCount >= requiredCorrect)
             {
+                gameEnded = true;
                 commandDisplay.text = "";
+                StopAllCoroutines();
+                GameModeManager.Instance.ResolveMinigame(true);
                 yield break;
             }
 
@@ -120,5 +156,17 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         if (cmd == "Don't press me") return pressed;
 
         return false;
+    }
+
+    float GetSpeedMultiplier()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 1.0f;
+            case GameModeManager.GameMode.Medium: return 1.3f;
+            case GameModeManager.GameMode.Hard: return 1.6f;
+            case GameModeManager.GameMode.God: return 2.0f;
+            default: return 1.0f;
+        }
     }
 }

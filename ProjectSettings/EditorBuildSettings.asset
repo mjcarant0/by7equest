@@ -6,14 +6,50 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Home/LandingPage.unity
-    guid: 8c9cfa26abfee488c85f1582747f6a02
+    path: Assets/Scenes/Mini Games/Home/LandingPage.unity
+    guid: 9ed95431dfef8a646a45a22cdb8d380a
   - enabled: 1
-    path: Assets/Scenes/Home/ScorePage.unity
-    guid: 8a6459c82712d344b881d28a8a3c926c
+    path: Assets/Scenes/Home/OpeningScene.unity
+    guid: 87f5b0a1925c18442b0e726880476892
+  - enabled: 1
+    path: Assets/Scenes/Flow/ModeDisplay.unity
+    guid: 5b12ee8aa95c89645aea143542b6fd2c
+  - enabled: 1
+    path: Assets/Scenes/Flow/GameStart.unity
+    guid: 6607f937efade604cbeccf51a6d8fd42
+  - enabled: 1
+    path: Assets/Scenes/Mini Games/Smash 'Em All/SliceEmAll.unity
+    guid: 7f4ec92a9dab01f409bd603b65ad24eb
+  - enabled: 1
+    path: Assets/Scenes/Mini Games/Karate/Karate.unity
+    guid: 4810657dbdafba1418c7aa9110e14d10
+  - enabled: 1
+    path: Assets/Scenes/Mini Games/Simon Says/SimonSays.unity
+    guid: 70de88cee5e26c74fafb2d16b115219b
+  - enabled: 1
+    path: Assets/Scenes/Home/ScoreScene.unity
+    guid: f3a881179e4120942bfd9621fc30c963
+  - enabled: 1
+    path: Assets/Scenes/Flow/GameEnd.unity
+    guid: 0b5dd48459f449c42a3ab0379fb43599
+  - enabled: 1
+    path: Assets/Scenes/Flow/TempTransition.unity
+    guid: 9b877b02f32bbb347bb374acc5594547
+  - enabled: 0
+    path: Assets/Scenes/Flow/TempGameOver.unity
+    guid: b963abb12e9808c4c85ca546aaad0a01
+  - enabled: 1
+    path: Assets/Scenes/Home/ClosingScene.unity
+    guid: 42bf132076db6f643943623b298c3def
   - enabled: 1
     path: Assets/Scenes/Home/CreditsPage.unity
     guid: 273b066e05055fd45b6e767405d78cc1
+  - enabled: 1
+    path: Assets/Scenes/Flow/GameModeBootstrap.unity
+    guid: 7e6f31c197474467baf1cb4481ed3a5e
+  - enabled: 1
+    path: Assets/Scenes/Home/NameInput.unity
+    guid: e3da248d90949c746bd837123a5ec7fb
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   m_UseUCBPForAssetBundles: 0
