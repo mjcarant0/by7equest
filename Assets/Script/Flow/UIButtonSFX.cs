@@ -4,7 +4,7 @@ using System.Collections;
 
 public class UIButtonSFX : MonoBehaviour
 {
-    public AudioClip clickSound; // Assign your click sound here
+    public AudioClip clickSound;
 
     public void PlayClickAndLoad(string sceneName)
     {
