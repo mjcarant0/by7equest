@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class ItemSpawner : MonoBehaviour
 {
+    public AudioClip woodChopSFX;
+
     [Header("Prefabs")]
     public GameObject woodPrefab;
     public GameObject stonePrefab;
@@ -123,6 +125,9 @@ public class ItemSpawner : MonoBehaviour
             woodStack.Pop(); 
             script.ChopWood(); 
             topItemTimer = 0;
+
+            if (woodChopSFX != null && SoundManager.Instance != null)
+                SoundManager.Instance.PlaySFX(woodChopSFX);
         }
     }
 }

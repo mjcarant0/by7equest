@@ -4,6 +4,7 @@ public class FruitSlice : MonoBehaviour
 {
     public Sprite slicedSprite;
     public GameObject sliceVFXPrefab;
+    public AudioClip sliceSFX;
 
     private SpriteRenderer sr;
     private bool isSliced;
@@ -45,6 +46,9 @@ public class FruitSlice : MonoBehaviour
 
         if (sliceVFXPrefab != null)
             Instantiate(sliceVFXPrefab, transform.position, Quaternion.identity);
+
+        if (sliceSFX != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySFX(sliceSFX);
 
         if (SmashEmAllManager.Instance != null)
             SmashEmAllManager.Instance.FruitSliced();
