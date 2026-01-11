@@ -31,29 +31,37 @@ public class BGMManager : MonoBehaviour
 
     void Start()
     {
-        lastSceneName = SceneManager.GetActiveScene().name;
+        string currentScene = SceneManager.GetActiveScene().name;
 
-        // Play if starting in ModeDisplay, GameStart, or GameEnd
-        if ((lastSceneName == modeDisplaySceneName ||
-             lastSceneName == gameStartSceneName ||
-             lastSceneName == gameEndSceneName) &&
+        // Play BGM if starting in ModeDisplay, GameStart, or GameEnd
+        if ((currentScene == modeDisplaySceneName ||
+             currentScene == gameStartSceneName ||
+             currentScene == gameEndSceneName) &&
              !bgmSource.isPlaying)
         {
             bgmSource.Play();
         }
+
+        lastSceneName = currentScene;
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         string currentScene = scene.name;
 
-        // Always play in GameEnd
-        if (currentScene == gameEndSceneName)
+        // Always play on ModeDisplay (new mode) if not already playing
+        if (currentScene == modeDisplaySceneName)
         {
             if (!bgmSource.isPlaying)
                 bgmSource.Play();
         }
-        // ModeDisplay → GameStart or GameEnd → GameStart: persist BGM
+        // Always play on GameEnd if not already playing
+        else if (currentScene == gameEndSceneName)
+        {
+            if (!bgmSource.isPlaying)
+                bgmSource.Play();
+        }
+        // GameEnd → GameStart or ModeDisplay → GameStart: persist BGM
         else if (currentScene == gameStartSceneName &&
                 (lastSceneName == modeDisplaySceneName || lastSceneName == gameEndSceneName))
         {
