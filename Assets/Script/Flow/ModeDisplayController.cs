@@ -56,14 +56,14 @@ public class ModeDisplayController : MonoBehaviour
 
     private void Awake()
     {
-        // Get or add CanvasGroup for fade animations
-        if (canvasGroup == null)
+        if (canvasGroup == null && backgroundImage != null)
         {
-            canvasGroup = GetComponent<CanvasGroup>();
+            canvasGroup = backgroundImage.GetComponent<CanvasGroup>();
+
             if (canvasGroup == null)
             {
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
-                Debug.Log("[ModeDisplay] Added CanvasGroup component for fade animations");
+                canvasGroup = backgroundImage.gameObject.AddComponent<CanvasGroup>();
+                Debug.Log("[ModeDisplay] Added CanvasGroup to BackgroundImage");
             }
         }
 

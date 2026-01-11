@@ -1113,8 +1113,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1062598084}
   - component: {fileID: 1062598085}
+  - component: {fileID: 1062598086}
   m_Layer: 0
-  m_Name: BGM
+  m_Name: BGMManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1147,10 +1148,10 @@ AudioSource:
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 50956dae3b2e5a74ab8aa964aaefb7e6, type: 3}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -1232,6 +1233,23 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1062598086
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1062598083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a09bb0d873de1b343bff8476f61214e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmSource: {fileID: 1062598085}
+  modeDisplaySceneName: ModeDisplay
+  gameStartSceneName: GameStart
+  gameEndSceneName: GameEnd
+  closingSceneName: ClosingScene
 --- !u!1 &1079393472
 GameObject:
   m_ObjectHideFlags: 0
@@ -2000,7 +2018,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 8300000, guid: 1093465890cfadb41b3e086d6a4e37fc, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.4
+  m_Volume: 0.3
   m_Pitch: 1
   Loop: 0
   Mute: 0
