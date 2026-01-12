@@ -16,6 +16,13 @@ public class ItemSpawner : MonoBehaviour
     public float itemSpacing = 0.45f;
     public float itemFallTime = 1.0f;
 
+    [Header("Game Time & Lives")]
+    public float gameTime = 30f; 
+    private float currentTime;
+    private int rocksHitCount = 0;
+    private int totalBoards = 0;
+    private int boardsBroken = 0;
+
     private Stack<GameObject> woodStack = new Stack<GameObject>();
     private bool isSpawning = false;
     private float topItemTimer = 0f; 
@@ -26,6 +33,7 @@ public class ItemSpawner : MonoBehaviour
     void Start()
     {
         initialTablePos = karateTable.transform.position;
+        currentTime = gameTime;
         
         // Adjust speed based on difficulty
         if (GameModeManager.Instance != null)
@@ -72,6 +80,12 @@ public class ItemSpawner : MonoBehaviour
         Vector3 spawnPos = transform.position + new Vector3(0, index * itemSpacing, 0);
         GameObject newItem = Instantiate(prefab, spawnPos, Quaternion.identity);
 
+        // Track total boards spawned
+        if (isWood)
+        {
+            totalBoards++;
+        }
+
         // STACK (LIFO)
         woodStack.Push(newItem);
     }
@@ -81,8 +95,23 @@ public class ItemSpawner : MonoBehaviour
         // karate table
         if (gameEnded) return;
 
-        // ✅ WIN CONDITION (stack cleared)
-        if (!isSpawning && woodStack.Count == 0 && !gameEnded)
+        // Update game timer
+        if (!isSpawning)
+        {
+            currentTime -= Time.deltaTime;
+            if (currentTime <= 0)
+            {
+                // Time's up - Game Over
+                currentTime = 0;
+                gameEnded = true;
+                GameModeManager.Instance.ResolveMinigame(false);
+                enabled = false;
+                return;
+            }
+        }
+
+        // WIN CONDITION (all boards broken)
+        if (!isSpawning && boardsBroken >= totalBoards && totalBoards > 0 && !gameEnded)
         {
             gameEnded = true;
             GameModeManager.Instance.ResolveMinigame(true);
@@ -119,15 +148,58 @@ public class ItemSpawner : MonoBehaviour
             Destroy(topItem); 
             topItemTimer = 0;
         }
-        else if (script.isWood && Input.GetKeyDown(KeyCode.Space))
+        else if (Input.GetKeyDown(KeyCode.Space))
         {
-            // POP (as chopped)
-            woodStack.Pop(); 
-            script.ChopWood(); 
-            topItemTimer = 0;
+            if (script.isWood)
+            {
+                // Hit a board - SUCCESS
+                woodStack.Pop();
+                boardsBroken++;
+                script.ChopWood();
+                topItemTimer = 0;
 
-            if (woodChopSFX != null && SoundManager.Instance != null)
-                SoundManager.Instance.PlaySFX(woodChopSFX);
+                if (woodChopSFX != null && SoundManager.Instance != null)
+                    SoundManager.Instance.PlaySFX(woodChopSFX);
+            }
+            else
+            {
+                // Hit a rock - PENALTY
+                rocksHitCount++;
+                Debug.Log($"[Karate] Rock hit! Count: {rocksHitCount}");
+
+                if (rocksHitCount == 1)
+                {
+                    // 1st rock: -2 seconds
+                    currentTime = Mathf.Max(0, currentTime - 2f);
+                    Debug.Log("[Karate] 1st rock penalty: -2 seconds");
+                }
+                else if (rocksHitCount == 2)
+                {
+                    // 2nd rock: -5 seconds
+                    currentTime = Mathf.Max(0, currentTime - 5f);
+                    Debug.Log("[Karate] 2nd rock penalty: -5 seconds");
+                }
+                else if (rocksHitCount == 3)
+                {
+                    // 3rd rock: -10 seconds
+                    currentTime = Mathf.Max(0, currentTime - 10f);
+                    Debug.Log("[Karate] 3rd rock penalty: -10 seconds");
+                }
+                else if (rocksHitCount >= 4)
+                {
+                    // 4th rock: Game Over (lose a life)
+                    Debug.Log("[Karate] 4th rock penalty: GAME OVER");
+                    gameEnded = true;
+                    GameModeManager.Instance.ResolveMinigame(false);
+                    enabled = false;
+                    return;
+                }
+
+                // Remove the rock from stack
+                woodStack.Pop();
+                script.ChopWood(); // Visual feedback
+                topItemTimer = 0;
+            }
         }
     }
 }
