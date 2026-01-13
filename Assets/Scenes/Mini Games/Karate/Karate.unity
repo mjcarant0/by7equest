@@ -1107,6 +1107,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   woodChopSFX: {fileID: 8300000, guid: 659f7dc0efcd15441bd42ea4c1e04b8a, type: 3}
+  stoneChopSFX: {fileID: 8300000, guid: 9d4f718b595067f4bb095253cf62af64, type: 3}
   woodPrefab: {fileID: 7109087283286163015, guid: 361cc43c5bc825540965a600288a35c2, type: 3}
   stonePrefab: {fileID: 1262390774684530684, guid: 78e45a94ca6215e44a4feb357a8be819, type: 3}
   karateTable: {fileID: 1291287080}
@@ -1114,7 +1115,6 @@ MonoBehaviour:
   itemsPerRound: 20
   itemSpacing: 0.33
   itemFallTime: 1
-  gameTime: 30
   minBoardsToWin: 6
 --- !u!4 &1780038569
 Transform:

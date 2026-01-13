@@ -531,6 +531,8 @@ MonoBehaviour:
   playerKey: 32
   commandDisplay: {fileID: 1387655453}
   spriteButton: {fileID: 1205066576}
+  correctSFX: {fileID: 8300000, guid: 63cd7c63e6dd56f4aa9b288ff8b7cb68, type: 3}
+  wrongSFX: {fileID: 8300000, guid: 4e4e9a10257c55542b4be8f22ca2e9d2, type: 3}
   timeLimit: 12
 --- !u!4 &484314833
 Transform:
@@ -1091,6 +1093,7 @@ MonoBehaviour:
   - {fileID: -1876432983, guid: 2bf1412454ad3c24d99c3c0b5ee921c4, type: 3}
   - {fileID: -1113966139, guid: 2bf1412454ad3c24d99c3c0b5ee921c4, type: 3}
   speed: 0.1
+  clickSFX: {fileID: 8300000, guid: 85627f5d01b204b4d928f5b3bd2bb819, type: 3}
 --- !u!1 &1354114916
 GameObject:
   m_ObjectHideFlags: 0
@@ -1324,6 +1327,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1473554605}
+  - component: {fileID: 1473554606}
   m_Layer: 0
   m_Name: SoundManager
   m_TagString: Untagged
@@ -1346,6 +1350,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 476767413}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1473554606
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473554604}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffd5f30c4d850de4eb5f462355f4ef09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1645379676
 GameObject:
   m_ObjectHideFlags: 0

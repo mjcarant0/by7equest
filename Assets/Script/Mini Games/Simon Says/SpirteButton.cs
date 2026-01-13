@@ -5,6 +5,8 @@ public class SpriteButton : MonoBehaviour
 {
     public Sprite[] sprites;   // Sprites for animation
     public float speed = 0.1f;
+    
+    public AudioClip clickSFX;
 
     SpriteRenderer sr;
     bool playing = false;
@@ -43,6 +45,9 @@ public class SpriteButton : MonoBehaviour
     {
         if (!armed || playing)
             return;
+
+        if (clickSFX != null && SoundManager.Instance != null)
+            SoundManager.Instance.PlaySFX(clickSFX);
 
         StartCoroutine(Animate());
     }

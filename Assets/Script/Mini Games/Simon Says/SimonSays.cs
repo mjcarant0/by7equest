@@ -10,6 +10,9 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     public TextMeshProUGUI commandDisplay;
     public SpriteButton spriteButton;
 
+    public AudioClip correctSFX;
+    public AudioClip wrongSFX;
+
     private string[] commandOptions = new string[]
     {
         "Simon says press me",
@@ -122,6 +125,14 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             }
 
             bool correct = CheckCommand(cmd, pressed);
+
+            if (SoundManager.Instance != null)
+            {
+                if (correct && correctSFX != null)
+                    SoundManager.Instance.PlaySFX(correctSFX);
+                else if (!correct && wrongSFX != null)
+                    SoundManager.Instance.PlaySFX(wrongSFX);
+            }
 
             background.color = correct ? Color.green : Color.red;
 

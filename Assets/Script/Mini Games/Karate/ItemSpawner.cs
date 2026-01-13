@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class ItemSpawner : MonoBehaviour
 {
     public AudioClip woodChopSFX;
+    public AudioClip stoneChopSFX;
 
     [Header("Prefabs")]
     public GameObject woodPrefab;
@@ -181,6 +182,9 @@ public class ItemSpawner : MonoBehaviour
             }
             else
             {
+                if (stoneChopSFX != null && SoundManager.Instance != null)
+                    SoundManager.Instance.PlaySFX(stoneChopSFX);
+
                 // Hit a rock - PENALTY
                 rocksHitCount++;
                 
