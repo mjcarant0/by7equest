@@ -32,6 +32,8 @@ public class SmashEmAllManager : MonoBehaviour
         MoveAlongConveyor.ResetSliceEmAll();
 
         if (GameModeManager.Instance != null)
+            timer = GameModeManager.Instance.GetTimeLimitForExternalCall();
+        else
             timer = timeLimit;
     }
 

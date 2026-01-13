@@ -326,7 +326,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Enter text...
+  m_text: Enter Your Name.....
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1fa1adad8b85be14096d08e387ada86a, type: 2}
   m_sharedMaterial: {fileID: -7740062964718956813, guid: 1fa1adad8b85be14096d08e387ada86a, type: 2}
@@ -360,8 +360,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 2
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -437,6 +437,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerNameInput: {fileID: 961020597}
   submitButton: {fileID: 2107391427}
+  warningText: {fileID: 100459339}
 --- !u!4 &159745766
 Transform:
   m_ObjectHideFlags: 0
@@ -1441,8 +1442,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -1651,7 +1652,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 2107391428}
   m_OnClick:
     m_PersistentCalls:

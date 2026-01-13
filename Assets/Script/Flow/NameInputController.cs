@@ -8,17 +8,31 @@ public class NameInputController : MonoBehaviour
     [Header("UI References")]
     public TMP_InputField playerNameInput;
     public Button submitButton;
+    public TextMeshProUGUI warningText;
+
+    private bool submitInProgress = false;
 
     void Start()
     {
+        if (playerNameInput != null)
+        {
+            playerNameInput.characterLimit = 10;
+            playerNameInput.onValueChanged.AddListener(OnNameChanged);
+        }
+
         if (submitButton != null)
         {
             submitButton.onClick.AddListener(OnSubmitClicked);
+            submitButton.interactable = false;
         }
     }
 
     public void OnSubmitClicked()
     {
+        if (submitInProgress) return;
+        submitInProgress = true;
+        if (submitButton != null) submitButton.interactable = false;
+
         string playerName = playerNameInput != null ? playerNameInput.text : "Anonymous";
         
         if (string.IsNullOrWhiteSpace(playerName))
@@ -26,50 +40,24 @@ public class NameInputController : MonoBehaviour
             playerName = "Anonymous";
         }
 
-        Debug.Log($"[NameInput] Player name submitted: {playerName}");
-
-        // Ensure database is connected before saving
-        if (PlayFabDatabase.Instance != null && !PlayFabDatabase.Instance.IsConnected())
+        // Ensure name does not exceed 10 characters
+        if (playerName.Length > 10)
         {
-            Debug.Log("[NameInput] Connecting to database...");
-            PlayFabDatabase.Instance.ConnectToDatabase(playerName);
-            // Wait a moment for connection, then proceed
-            StartCoroutine(WaitForConnectionAndSave(playerName));
-            return;
+            playerName = playerName.Substring(0, 10);
         }
 
-        // Get the final score from GameModeManager
-        if (GameModeManager.Instance != null)
+        Debug.Log($"[NameInput] Player name submitted: {playerName}");
+
+        // Always create fresh connection to ensure unique account for each submission
+        if (PlayFabDatabase.Instance != null)
         {
-            int finalScore = GameModeManager.Instance.score;
-            
-            // Save to database (ONLY happens when Enter button is clicked)
-            if (PlayFabDatabase.Instance != null && PlayFabDatabase.Instance.IsConnected())
-            {
-                PlayFabDatabase.Instance.SaveToDatabase(playerName, finalScore, (success) =>
-                {
-                    if (success)
-                    {
-                        Debug.Log("[NameInput] ✓ Data saved to database successfully!");
-                    }
-                    else
-                    {
-                        Debug.LogError("[NameInput] ✗ Failed to save data to database!");
-                    }
-                    
-                    // Continue to finalize session regardless of save result
-                    GameModeManager.Instance.FinalizeSession(playerName);
-                });
-            }
-            else
-            {
-                Debug.LogWarning("[NameInput] Database not connected - data not saved");
-                GameModeManager.Instance.FinalizeSession(playerName);
-            }
+            Debug.Log("[NameInput] Creating fresh database connection...");
+            PlayFabDatabase.Instance.ConnectToDatabase(playerName);
+            StartCoroutine(WaitForConnectionAndSave(playerName));
         }
         else
         {
-            Debug.LogError("[NameInput] GameModeManager.Instance is null!");
+            Debug.LogError("[NameInput] PlayFabDatabase.Instance is null!");
         }
     }
 
@@ -117,6 +105,15 @@ public class NameInputController : MonoBehaviour
             {
                 GameModeManager.Instance.FinalizeSession(playerName);
             }
+        }
+    }
+
+    private void OnNameChanged(string value)
+    {
+        if (submitButton != null)
+        {
+            bool hasText = !string.IsNullOrWhiteSpace(value);
+            submitButton.interactable = hasText;
         }
     }
 }
