@@ -14,8 +14,12 @@ public class NameInputController : MonoBehaviour
 
     void Start()
     {
+        // Reset state for new player session
+        submitInProgress = false;
+        
         if (playerNameInput != null)
         {
+            playerNameInput.text = ""; // Clear previous player's name
             playerNameInput.characterLimit = 10;
             playerNameInput.onValueChanged.AddListener(OnNameChanged);
         }
@@ -23,7 +27,7 @@ public class NameInputController : MonoBehaviour
         if (submitButton != null)
         {
             submitButton.onClick.AddListener(OnSubmitClicked);
-            submitButton.interactable = false;
+            submitButton.interactable = false; // Start disabled until name is entered
         }
     }
 
@@ -81,26 +85,50 @@ public class NameInputController : MonoBehaviour
             if (GameModeManager.Instance != null)
             {
                 int finalScore = GameModeManager.Instance.score;
+                Debug.Log($"[NameInput] Score to save: {finalScore}");
+                
+                if (finalScore <= 0)
+                {
+                    Debug.LogWarning("[NameInput] WARNING: Score is 0 or negative! Check if GameModeManager.score was set properly.");
+                }
                 
                 PlayFabDatabase.Instance.SaveToDatabase(playerName, finalScore, (success) =>
                 {
                     if (success)
                     {
-                        Debug.Log("[NameInput] ✓ Data saved to database successfully!");
+                        Debug.Log($"[NameInput] ✓ Data saved to database successfully! ({playerName} - {finalScore})");
                     }
                     else
                     {
-                        Debug.LogError("[NameInput] ✗ Failed to save data to database!");
+                        Debug.LogError($"[NameInput] ✗ Failed to save data to database! ({playerName} - {finalScore})");
                     }
+                    
+                    // Reset submit flag before finalizing
+                    submitInProgress = false;
+                    if (submitButton != null) submitButton.interactable = true;
+                    
+                    // Destroy old GameModeManager instance now that score is saved
+                    GameModeManager.Instance.DestroyOldInstance();
                     
                     // Continue to finalize session regardless of save result
                     GameModeManager.Instance.FinalizeSession(playerName);
                 });
             }
+            else
+            {
+                Debug.LogError("[NameInput] GameModeManager.Instance is null!");
+                submitInProgress = false;
+                if (submitButton != null) submitButton.interactable = true;
+            }
         }
         else
         {
             Debug.LogError("[NameInput] Database connection timeout - data not saved");
+            
+            // Reset submit flag
+            submitInProgress = false;
+            if (submitButton != null) submitButton.interactable = true;
+            
             if (GameModeManager.Instance != null)
             {
                 GameModeManager.Instance.FinalizeSession(playerName);

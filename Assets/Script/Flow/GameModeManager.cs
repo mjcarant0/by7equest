@@ -65,7 +65,8 @@ public class GameModeManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("[GameModeManager] Duplicate found, destroying");
+            // Keep old instance alive until NameInput finishes saving the score
+            Debug.LogWarning("[GameModeManager] Duplicate found, destroying new instance to preserve score");
             Destroy(gameObject);
             return;
         }
@@ -224,6 +225,8 @@ public class GameModeManager : MonoBehaviour
             Debug.Log($"[GameModeManager] Session finalized: {playerName} - {score} - {currentMode}");
             isGameOver = true;
             StopAllCoroutines();
+            
+            // Score already saved by NameInputController, just reset and load landing page
             ResetGame();
             HeartUIHandler.StaticResetLives();
             SceneManager.LoadScene(landingPage);
@@ -255,6 +258,16 @@ public class GameModeManager : MonoBehaviour
         minigamesCompletedInMode = 0;
         currentMode = GameMode.Easy;
         isGameOver = false;
+    }
+
+    public void DestroyOldInstance()
+    {
+        // Called after score is saved to clean up old instance
+        if (Instance != null && Instance.gameObject != null)
+        {
+            Debug.Log("[GameModeManager] Destroying old instance after score saved");
+            Destroy(Instance.gameObject);
+        }
     }
 
     public void StartTimerExternally()
