@@ -530,6 +530,7 @@ MonoBehaviour:
   background: {fileID: 1354114918}
   playerKey: 32
   commandDisplay: {fileID: 1387655453}
+  spriteButton: {fileID: 1205066576}
   timeLimit: 12
 --- !u!4 &484314833
 Transform:
@@ -978,7 +979,7 @@ GameObject:
   - component: {fileID: 1205066574}
   - component: {fileID: 1205066576}
   m_Layer: 0
-  m_Name: press-button_0
+  m_Name: SpriteButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1084,7 +1085,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41fc174a5bd4f7a42859e78b407df745, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buttonSFX: {fileID: 8300000, guid: 85627f5d01b204b4d928f5b3bd2bb819, type: 3}
   sprites:
   - {fileID: 1295205808061421671, guid: 2bf1412454ad3c24d99c3c0b5ee921c4, type: 3}
   - {fileID: 629830293, guid: 2bf1412454ad3c24d99c3c0b5ee921c4, type: 3}
