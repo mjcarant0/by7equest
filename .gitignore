@@ -47,15 +47,12 @@ sysinfo.txt
 [Aa]ssets/AddressableAssetsData/*/BuildCache.bin
 
 ###############################################################################
-# PlayFab — Security & Local Configuration
+# Sensitive Data — API Keys & Secrets
 ###############################################################################
 
-*/PlayFab/**/Secrets.cs
-**/PlayFab/**/PlayFabSecrets.cs
-*/PlayFab/**/EditorPrefs.cs
-
-**/PlayFab/**/Cache/
-**/PlayFab/**/Temp/
+# PlayFab secrets (use PlayFabSecrets.cs.example as template)
+Assets/Script/Database/PlayFabSecrets.cs
+Assets/Script/Database/PlayFabSecrets.cs.meta
 
 ###############################################################################
 # Keep These 

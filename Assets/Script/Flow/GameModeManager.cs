@@ -205,10 +205,11 @@ public class GameModeManager : MonoBehaviour
         // Stop any running coroutines to prevent conflicts
         StopAllCoroutines();
 
-        // If called with player name (from NameInput scene), save and return to landing page
+        // If called with player name (from NameInput scene), return to landing page
         if (!string.IsNullOrEmpty(playerName))
         {
-            SaveToDatabase(playerName, score, currentMode.ToString());
+            // Note: Database save is handled in NameInputController when Enter button is clicked
+            Debug.Log($"[GameModeManager] Session finalized: {playerName} - {score} - {currentMode}");
             ResetGame();
             SceneManager.LoadScene(landingPage);
         }
@@ -217,11 +218,6 @@ public class GameModeManager : MonoBehaviour
             // Called from HeartUIHandler when lives reach 0 - start end sequence
             StartCoroutine(ShowEndSequence());
         }
-    }
-
-    private void SaveToDatabase(string playerName, int finalScore, string modeReached)
-    {
-        Debug.Log($"[GameModeManager] SAVE TO DATABASE: {playerName} - {finalScore} - {modeReached}");
     }
 
     private void ResetGame()
