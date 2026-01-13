@@ -121,6 +121,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   slicedSprite: {fileID: 21300000, guid: 0331197568581334da34eda8a8fff3cc, type: 3}
   sliceVFXPrefab: {fileID: 22464577733371832, guid: fc827908ca17e864fa003da21f901714, type: 3}
+  sliceSFX: {fileID: 8300000, guid: a71f94da6a6f74146aaf2e26bce2ce28, type: 3}
 --- !u!61 &2820172638137344217
 BoxCollider2D:
   m_ObjectHideFlags: 0

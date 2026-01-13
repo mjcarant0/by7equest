@@ -18,7 +18,7 @@ public class SceneManagerController : MonoBehaviour
     // Function to load the LandingPage (ng exit button)
     public void OnExitButtonClicked()
     {
-        Debug.Log("[ScoreDisplayController] Exit button clicked, returning to Landing Page");
+        Debug.Log("[SceneManager] Exit button clicked, returning to Landing Page");
         SceneManager.LoadScene("LandingPage");
     }
 

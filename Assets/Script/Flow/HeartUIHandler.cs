@@ -270,4 +270,11 @@ public class HeartUIHandler : MonoBehaviour
         }
         return null;
     }
+
+    public static void StaticResetLives()
+    {
+        sharedLives = 3;
+        sharedInitialized = true;
+        Debug.Log("[HeartUIHandler] Static lives reset to 3");
+    }
 }

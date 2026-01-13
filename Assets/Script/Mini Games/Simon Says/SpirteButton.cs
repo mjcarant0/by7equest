@@ -3,6 +3,8 @@ using System.Collections;
 
 public class SpriteButton : MonoBehaviour
 {
+    public AudioClip buttonSFX;
+
     public Sprite[] sprites;   // your 4 images
     public float speed = 0.1f; // how fast it animates
 
@@ -19,6 +21,9 @@ public class SpriteButton : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space) && !playing)
         {
+            if (buttonSFX != null && SoundManager.Instance != null)
+                SoundManager.Instance.PlaySFX(buttonSFX);
+
             StartCoroutine(Animate());
         }
     }

@@ -124,9 +124,9 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
                 // Deduct time based on mistake count
                 if (mistakes == 1)
-                    timer -= 1f; // 1st mistake: -1 second
+                    timer -= 2f; // 1st mistake: -2 seconds
                 else if (mistakes == 2)
-                    timer -= 3f; // 2nd mistake: -3 seconds
+                    timer -= 5f; // 2nd mistake: -5 seconds
 
                 // Clamp timer to non-negative before checking expiry
                 if (timer < 0f) timer = 0f;
