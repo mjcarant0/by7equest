@@ -8,6 +8,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     public SpriteRenderer background;
     public KeyCode playerKey = KeyCode.Space;
     public TextMeshProUGUI commandDisplay;
+    public SpriteButton spriteButton;
 
     private string[] commandOptions = new string[]
     {
@@ -100,13 +101,21 @@ public class SimonSaysLinkedListUI : MonoBehaviour
             string cmd = currentNode.Value;
             commandDisplay.text = cmd;
 
+            // Arm the button for this new command
+            if (spriteButton != null)
+                spriteButton.ArmForNewCommand();
+
             bool pressed = false;
             float commandTimer = 0f;
 
             while (commandTimer < commandTime)
             {
                 if (Input.GetKeyDown(playerKey))
+                {
                     pressed = true;
+                    if (spriteButton != null)
+                        spriteButton.TryPlay();
+                }
 
                 commandTimer += Time.deltaTime;
                 yield return null;
@@ -124,9 +133,18 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
                 // Deduct time based on mistake count
                 if (mistakes == 1)
-                    timer -= 2f; // 1st mistake: -2 seconds
+                    timer -= 1f;
                 else if (mistakes == 2)
-                    timer -= 5f; // 2nd mistake: -5 seconds
+                    timer -= 3f;
+                else if (mistakes == 3)
+                    timer -= 5f;
+                else if (mistakes >= 4)
+                {
+                    // 4th mistake: deduct life
+                    mistakes = 0;
+                    EndGame(false); // This will deduct a life via GameModeManager
+                    yield break;
+                }
 
                 // Clamp timer to non-negative before checking expiry
                 if (timer < 0f) timer = 0f;
@@ -142,13 +160,6 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
             yield return new WaitForSecondsRealtime(feedbackTime);
             background.color = Color.black;
-
-            // GAME OVER (3 mistakes)
-            if (mistakes >= 3)
-            {
-                EndGame(false);
-                yield break;
-            }
 
             // WIN (5 correct commands)
             if (correctCount >= requiredCorrect)
