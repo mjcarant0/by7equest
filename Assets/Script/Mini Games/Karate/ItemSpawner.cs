@@ -12,20 +12,19 @@ public class ItemSpawner : MonoBehaviour
     
     [Header("Settings")]
     public float spawnDelay = 0.15f; 
-    public int itemsPerRound = 20; 
+    public int itemsPerRound = 40; 
     public float itemSpacing = 0.33f;
     public float itemFallTime = 1f;
 
     [Header("Game Time & Lives")]
-    public float gameTime = 30f; 
     public int minBoardsToWin = 6;
-    private float currentTime;
     private int rocksHitCount = 0;
     private int totalBoards = 0;
     private int boardsBroken = 0;
 
     private Stack<GameObject> woodStack = new Stack<GameObject>();
     private bool isSpawning = false;
+    private bool timerStarted = false;
     private float topItemTimer = 0f; 
     private Vector3 initialTablePos;
 
@@ -35,34 +34,17 @@ public class ItemSpawner : MonoBehaviour
     {
         initialTablePos = karateTable.transform.position;
         
-        // Set timer based on difficulty level
+        // Stop the GameModeManager's timer during spawning
         if (GameModeManager.Instance != null)
         {
-            gameTime = GetGameTimeByDifficulty();
-            currentTime = gameTime;
+            GameModeManager.Instance.StopTimerExternally();
             
             float speedMultiplier = GetSpeedMultiplier();
             spawnDelay /= speedMultiplier;
             itemFallTime /= speedMultiplier;
         }
-        else
-        {
-            currentTime = gameTime;
-        }
         
         StartCoroutine(SpawnInitialStack());
-    }
-
-    float GetGameTimeByDifficulty()
-    {
-        switch (GameModeManager.Instance.currentMode)
-        {
-            case GameModeManager.GameMode.Easy: return 45f;
-            case GameModeManager.GameMode.Medium: return 35f;
-            case GameModeManager.GameMode.Hard: return 25f;
-            case GameModeManager.GameMode.God: return 20f;
-            default: return 30f;
-        }
     }
 
     float GetSpeedMultiplier()
@@ -90,6 +72,17 @@ public class ItemSpawner : MonoBehaviour
         yield return new WaitForSecondsRealtime(0.5f);
         
         isSpawning = false;
+        
+        // Wait a brief moment before starting the timer so player can see all items
+        yield return new WaitForSecondsRealtime(0.3f);
+        
+        // Start the GameModeManager timer
+        if (GameModeManager.Instance != null)
+        {
+            GameModeManager.Instance.StartTimerExternally();
+        }
+        
+        timerStarted = true;
     }
 
     void SpawnItem(int index)
@@ -114,27 +107,30 @@ public class ItemSpawner : MonoBehaviour
         // karate table
         if (gameEnded) return;
 
-        // Update game timer
-        if (!isSpawning)
+        // Check if GameModeManager timer has expired (only after spawning is complete)
+        if (timerStarted && GameModeManager.Instance != null && GameModeManager.Instance.timer <= 0)
         {
-            currentTime -= Time.deltaTime;
+            // Time's up - check if player broke at least 6 boards
+            gameEnded = true;
+            GameModeManager.Instance.StopTimerExternally();
             
-            if (currentTime <= 0)
-            {
-                // Time's up - check if player broke at least 6 boards
-                currentTime = 0;
-                gameEnded = true;
-                bool success = boardsBroken >= minBoardsToWin;
-                GameModeManager.Instance.ResolveMinigame(success);
-                enabled = false;
-                return;
-            }
+            bool success = boardsBroken >= minBoardsToWin;
+            GameModeManager.Instance.ResolveMinigame(success);
+            enabled = false;
+            return;
         }
 
         // WIN CONDITION (all items gone - broken or vanished)
         if (!isSpawning && woodStack.Count == 0 && !gameEnded)
         {
             gameEnded = true;
+            
+            // Stop GameModeManager timer to prevent double resolution
+            if (GameModeManager.Instance != null)
+            {
+                GameModeManager.Instance.StopTimerExternally();
+            }
+            
             bool success = boardsBroken >= minBoardsToWin;
             GameModeManager.Instance.ResolveMinigame(success);
             enabled = false;
@@ -191,47 +187,48 @@ public class ItemSpawner : MonoBehaviour
                 if (rocksHitCount == 1)
                 {
                     // 1st rock: -2 seconds
-                    float timeBefore = currentTime;
-                    currentTime = Mathf.Max(0, currentTime - 2f);
-                    float timeDeducted = timeBefore - currentTime;
-                    
-                    // Sync with GameModeManager
                     if (GameModeManager.Instance != null)
-                        GameModeManager.Instance.timer = currentTime;
-                    
-                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
+                    {
+                        float timeBefore = GameModeManager.Instance.timer;
+                        GameModeManager.Instance.timer = Mathf.Max(0, GameModeManager.Instance.timer - 2f);
+                        float timeDeducted = timeBefore - GameModeManager.Instance.timer;
+                        Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {GameModeManager.Instance.timer:F1}s remaining)");
+                    }
                 }
                 else if (rocksHitCount == 2)
                 {
                     // 2nd rock: -5 seconds
-                    float timeBefore = currentTime;
-                    currentTime = Mathf.Max(0, currentTime - 5f);
-                    float timeDeducted = timeBefore - currentTime;
-                    
-                    // Sync with GameModeManager
                     if (GameModeManager.Instance != null)
-                        GameModeManager.Instance.timer = currentTime;
-                    
-                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
+                    {
+                        float timeBefore = GameModeManager.Instance.timer;
+                        GameModeManager.Instance.timer = Mathf.Max(0, GameModeManager.Instance.timer - 5f);
+                        float timeDeducted = timeBefore - GameModeManager.Instance.timer;
+                        Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {GameModeManager.Instance.timer:F1}s remaining)");
+                    }
                 }
                 else if (rocksHitCount == 3)
                 {
                     // 3rd rock: -10 seconds
-                    float timeBefore = currentTime;
-                    currentTime = Mathf.Max(0, currentTime - 10f);
-                    float timeDeducted = timeBefore - currentTime;
-                    
-                    // Sync with GameModeManager
                     if (GameModeManager.Instance != null)
-                        GameModeManager.Instance.timer = currentTime;
-                    
-                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
+                    {
+                        float timeBefore = GameModeManager.Instance.timer;
+                        GameModeManager.Instance.timer = Mathf.Max(0, GameModeManager.Instance.timer - 10f);
+                        float timeDeducted = timeBefore - GameModeManager.Instance.timer;
+                        Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {GameModeManager.Instance.timer:F1}s remaining)");
+                    }
                 }
                 else if (rocksHitCount >= 4)
                 {
                     // 4th rock: Game Over (lose a life)
                     Debug.Log($"[Karate] Stone hit #{rocksHitCount}! CRITICAL HIT - GAME OVER!");
                     gameEnded = true;
+                    
+                    // Stop GameModeManager timer to prevent double resolution
+                    if (GameModeManager.Instance != null)
+                    {
+                        GameModeManager.Instance.StopTimerExternally();
+                    }
+                    
                     GameModeManager.Instance.ResolveMinigame(false);
                     enabled = false;
                     return;
