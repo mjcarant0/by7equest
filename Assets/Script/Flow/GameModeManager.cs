@@ -193,6 +193,19 @@ public class GameModeManager : MonoBehaviour
 
     public void FinalizeSession(string playerName = "")
     {
+        // If called with player name (from NameInput scene), always allow it to load landing page
+        if (!string.IsNullOrEmpty(playerName))
+        {
+            Debug.Log($"[GameModeManager] Session finalized: {playerName} - {score} - {currentMode}");
+            isGameOver = true;
+            StopAllCoroutines();
+            ResetGame();
+            HeartUIHandler.StaticResetLives();
+            SceneManager.LoadScene(landingPage);
+            return;
+        }
+
+        // For game-over-from-loss path, check if already called
         if (isGameOver)
         {
             Debug.Log("[GameModeManager] FinalizeSession already called, ignoring duplicate");
@@ -205,23 +218,8 @@ public class GameModeManager : MonoBehaviour
         // Stop any running coroutines to prevent conflicts
         StopAllCoroutines();
 
-        // If called with player name (from NameInput scene), save and return to landing page
-        if (!string.IsNullOrEmpty(playerName))
-        {
-            SaveToDatabase(playerName, score, currentMode.ToString());
-            ResetGame();
-            SceneManager.LoadScene(landingPage);
-        }
-        else
-        {
-            // Called from HeartUIHandler when lives reach 0 - start end sequence
-            StartCoroutine(ShowEndSequence());
-        }
-    }
-
-    private void SaveToDatabase(string playerName, int finalScore, string modeReached)
-    {
-        Debug.Log($"[GameModeManager] SAVE TO DATABASE: {playerName} - {finalScore} - {modeReached}");
+        // Called from HeartUIHandler when lives reach 0 - start end sequence
+        StartCoroutine(ShowEndSequence());
     }
 
     private void ResetGame()
@@ -279,11 +277,11 @@ public class GameModeManager : MonoBehaviour
     {
         switch (currentMode)
         {
-            case GameMode.Easy: return 30f;
-            case GameMode.Medium: return 25f;
-            case GameMode.Hard: return 20f;
+            case GameMode.Easy: return 25f;
+            case GameMode.Medium: return 20f;
+            case GameMode.Hard: return 15f;
             case GameMode.God: return 10f;
-            default: return 30f;
+            default: return 25f;
         }
     }
 

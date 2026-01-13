@@ -60,11 +60,18 @@ public class TimerUIController : MonoBehaviour
         float remaining = 0f;
         if (GameModeManager.Instance != null)
         {
-            remaining = GameModeManager.Instance.timer;
+            remaining = Mathf.Max(0f, GameModeManager.Instance.timer);
+        }
+
+        // When timer hits exactly 0, show the last frame (frame 9)
+        if (remaining == 0f)
+        {
+            sr.sprite = frames[frames.Length - 1];
+            return;
         }
 
         float normalized = 1f - Mathf.Clamp01(remaining / startDuration); // 0 at start, 1 at end
-        int idx = Mathf.Clamp(Mathf.FloorToInt(normalized * (frames.Length - 1)), 0, frames.Length - 1);
+        int idx = Mathf.Clamp(Mathf.FloorToInt(normalized * frames.Length), 0, frames.Length - 1);
 
         Sprite target = frames[idx];
         if (sr.sprite != target)
