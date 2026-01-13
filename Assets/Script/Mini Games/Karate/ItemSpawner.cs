@@ -11,13 +11,14 @@ public class ItemSpawner : MonoBehaviour
     public GameObject karateTable; 
     
     [Header("Settings")]
-    public float spawnDelay = 0.2f; 
-    public int itemsPerRound = 10; 
-    public float itemSpacing = 0.45f;
-    public float itemFallTime = 1.0f;
+    public float spawnDelay = 0.15f; 
+    public int itemsPerRound = 20; 
+    public float itemSpacing = 0.33f;
+    public float itemFallTime = 1f;
 
     [Header("Game Time & Lives")]
     public float gameTime = 30f; 
+    public int minBoardsToWin = 6;
     private float currentTime;
     private int rocksHitCount = 0;
     private int totalBoards = 0;
@@ -33,17 +34,35 @@ public class ItemSpawner : MonoBehaviour
     void Start()
     {
         initialTablePos = karateTable.transform.position;
-        currentTime = gameTime;
         
-        // Adjust speed based on difficulty
+        // Set timer based on difficulty level
         if (GameModeManager.Instance != null)
         {
+            gameTime = GetGameTimeByDifficulty();
+            currentTime = gameTime;
+            
             float speedMultiplier = GetSpeedMultiplier();
             spawnDelay /= speedMultiplier;
             itemFallTime /= speedMultiplier;
         }
+        else
+        {
+            currentTime = gameTime;
+        }
         
         StartCoroutine(SpawnInitialStack());
+    }
+
+    float GetGameTimeByDifficulty()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 45f;
+            case GameModeManager.GameMode.Medium: return 35f;
+            case GameModeManager.GameMode.Hard: return 25f;
+            case GameModeManager.GameMode.God: return 20f;
+            default: return 30f;
+        }
     }
 
     float GetSpeedMultiplier()
@@ -99,22 +118,25 @@ public class ItemSpawner : MonoBehaviour
         if (!isSpawning)
         {
             currentTime -= Time.deltaTime;
+            
             if (currentTime <= 0)
             {
-                // Time's up - Game Over
+                // Time's up - check if player broke at least 6 boards
                 currentTime = 0;
                 gameEnded = true;
-                GameModeManager.Instance.ResolveMinigame(false);
+                bool success = boardsBroken >= minBoardsToWin;
+                GameModeManager.Instance.ResolveMinigame(success);
                 enabled = false;
                 return;
             }
         }
 
-        // WIN CONDITION (all boards broken)
-        if (!isSpawning && boardsBroken >= totalBoards && totalBoards > 0 && !gameEnded)
+        // WIN CONDITION (all items gone - broken or vanished)
+        if (!isSpawning && woodStack.Count == 0 && !gameEnded)
         {
             gameEnded = true;
-            GameModeManager.Instance.ResolveMinigame(true);
+            bool success = boardsBroken >= minBoardsToWin;
+            GameModeManager.Instance.ResolveMinigame(success);
             enabled = false;
             return;
         }
@@ -165,30 +187,50 @@ public class ItemSpawner : MonoBehaviour
             {
                 // Hit a rock - PENALTY
                 rocksHitCount++;
-                Debug.Log($"[Karate] Rock hit! Count: {rocksHitCount}");
-
+                
                 if (rocksHitCount == 1)
                 {
                     // 1st rock: -2 seconds
+                    float timeBefore = currentTime;
                     currentTime = Mathf.Max(0, currentTime - 2f);
-                    Debug.Log("[Karate] 1st rock penalty: -2 seconds");
+                    float timeDeducted = timeBefore - currentTime;
+                    
+                    // Sync with GameModeManager
+                    if (GameModeManager.Instance != null)
+                        GameModeManager.Instance.timer = currentTime;
+                    
+                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
                 }
                 else if (rocksHitCount == 2)
                 {
                     // 2nd rock: -5 seconds
+                    float timeBefore = currentTime;
                     currentTime = Mathf.Max(0, currentTime - 5f);
-                    Debug.Log("[Karate] 2nd rock penalty: -5 seconds");
+                    float timeDeducted = timeBefore - currentTime;
+                    
+                    // Sync with GameModeManager
+                    if (GameModeManager.Instance != null)
+                        GameModeManager.Instance.timer = currentTime;
+                    
+                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
                 }
                 else if (rocksHitCount == 3)
                 {
                     // 3rd rock: -10 seconds
+                    float timeBefore = currentTime;
                     currentTime = Mathf.Max(0, currentTime - 10f);
-                    Debug.Log("[Karate] 3rd rock penalty: -10 seconds");
+                    float timeDeducted = timeBefore - currentTime;
+                    
+                    // Sync with GameModeManager
+                    if (GameModeManager.Instance != null)
+                        GameModeManager.Instance.timer = currentTime;
+                    
+                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! Time deduction: -{timeDeducted:F1} seconds (Timer: {currentTime:F1}s remaining)");
                 }
                 else if (rocksHitCount >= 4)
                 {
                     // 4th rock: Game Over (lose a life)
-                    Debug.Log("[Karate] 4th rock penalty: GAME OVER");
+                    Debug.Log($"[Karate] Stone hit #{rocksHitCount}! CRITICAL HIT - GAME OVER!");
                     gameEnded = true;
                     GameModeManager.Instance.ResolveMinigame(false);
                     enabled = false;

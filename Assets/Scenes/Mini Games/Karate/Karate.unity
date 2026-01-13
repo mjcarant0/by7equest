@@ -1110,10 +1110,12 @@ MonoBehaviour:
   woodPrefab: {fileID: 7109087283286163015, guid: 361cc43c5bc825540965a600288a35c2, type: 3}
   stonePrefab: {fileID: 1262390774684530684, guid: 78e45a94ca6215e44a4feb357a8be819, type: 3}
   karateTable: {fileID: 1291287080}
-  spawnDelay: 0.3
-  itemsPerRound: 10
-  itemSpacing: 0.4
+  spawnDelay: 0.15
+  itemsPerRound: 20
+  itemSpacing: 0.33
   itemFallTime: 1
+  gameTime: 30
+  minBoardsToWin: 6
 --- !u!4 &1780038569
 Transform:
   m_ObjectHideFlags: 0
