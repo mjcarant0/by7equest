@@ -32,6 +32,7 @@ public class GameModeManager : MonoBehaviour
     public float timer;
     private bool timerRunning;
     private bool isGameOver = false;
+    private bool isResolvingMinigame = false;
 
     [Header("Scene Names")]
     public string transitionScene = "ModeDisplay";
@@ -72,6 +73,14 @@ public class GameModeManager : MonoBehaviour
             return;
         }
 
+        // Prevent duplicate resolution calls
+        if (isResolvingMinigame)
+        {
+            Debug.LogWarning("[GameModeManager] ResolveMinigame already called, ignoring duplicate call");
+            return;
+        }
+
+        isResolvingMinigame = true;
         timerRunning = false;
 
         // Base score per mode
@@ -187,6 +196,9 @@ public class GameModeManager : MonoBehaviour
             return;
         }
 
+        // Reset resolution flag for next minigame
+        isResolvingMinigame = false;
+        
         timer = GetTimeLimitForExternalCall();
         MinigameRandomizer.Instance.LoadNextMinigame();
     }
@@ -236,6 +248,12 @@ public class GameModeManager : MonoBehaviour
     {
         timerRunning = true;
         Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode");
+    }
+
+    public void StopTimerExternally()
+    {
+        timerRunning = false;
+        Debug.Log($"[GameModeManager] Timer stopped externally");
     }
 
     private void Update()
