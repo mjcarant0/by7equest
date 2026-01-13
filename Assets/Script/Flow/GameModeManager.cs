@@ -15,6 +15,12 @@ public class GameModeManager : MonoBehaviour
     [Tooltip("Score earned in the most recent minigame (for display purposes)")]
     public int lastMinigameScore = 0;
 
+    [Tooltip("Base score from the most recent minigame (before bonus)")]
+    public int lastMinigameBaseScore = 0;
+
+    [Tooltip("Time bonus from the most recent minigame")]
+    public int lastMinigameBonus = 0;
+
     [Header("Difficulty Progression - Game Loop Control")]
     [Tooltip("Current difficulty mode (Easy→Medium→Hard→God)")]
     public GameMode currentMode = GameMode.Easy;
@@ -85,15 +91,22 @@ public class GameModeManager : MonoBehaviour
 
         // Base score per mode
         int baseScore = GetBaseScoreForExternalCall();
-        int total = success ? (baseScore + timeBonus) : 0;
 
-        // God mode: score and bonus are doubled
-        if (success && currentMode == GameMode.God)
+        // If caller didn't pass a bonus but time remains, grant it automatically
+        if (success && timeBonus == 0)
         {
-            total *= 2;
+            // Use remaining whole seconds as bonus
+            timeBonus = Mathf.Max(0, Mathf.FloorToInt(timer));
         }
 
+        int bonus = timeBonus;
+        int total = success ? (baseScore + bonus) : 0;
+
+        // God mode: no extra multiplier (base score for God mode is already set higher)
+
         lastMinigameScore = total;
+        lastMinigameBaseScore = success ? baseScore : 0;
+        lastMinigameBonus = success ? bonus : 0;
         score += lastMinigameScore;
 
         Debug.Log($"[GameModeManager] Minigame resolved. Success: {success}, Score added: {lastMinigameScore}, Total score: {score}");

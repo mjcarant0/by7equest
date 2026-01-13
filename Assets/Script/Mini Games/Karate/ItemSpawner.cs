@@ -13,17 +13,18 @@ public class ItemSpawner : MonoBehaviour
     
     [Header("Settings")]
     public float spawnDelay = 0.15f; 
-    public int itemsPerRound = 40; 
+    public int itemsPerRound = 25; 
     public float itemSpacing = 0.33f;
     public float itemFallTime = 1f;
 
     [Header("Game Time & Lives")]
-    public int minBoardsToWin = 6;
+    private int minBoardsToWin = 8;
     private int rocksHitCount = 0;
     private int totalBoards = 0;
     private int boardsBroken = 0;
 
     private Stack<GameObject> woodStack = new Stack<GameObject>();
+    private List<bool> itemTypes = new List<bool>(); // true = wood, false = rock
     private bool isSpawning = false;
     private bool timerStarted = false;
     private float topItemTimer = 0f; 
@@ -64,7 +65,26 @@ public class ItemSpawner : MonoBehaviour
     {
         isSpawning = true;
         
-        for (int i = 0; i < itemsPerRound; i++)
+        // Generate item types: 17 woods + 8 rocks, randomized
+        itemTypes.Clear();
+        int numWoods = 17;
+        int numRocks = 8;
+        
+        for (int i = 0; i < numWoods; i++)
+            itemTypes.Add(true); // wood
+        for (int i = 0; i < numRocks; i++)
+            itemTypes.Add(false); // rock
+            
+        // Shuffle the list
+        for (int i = itemTypes.Count - 1; i > 0; i--)
+        {
+            int j = Random.Range(0, i + 1);
+            bool temp = itemTypes[i];
+            itemTypes[i] = itemTypes[j];
+            itemTypes[j] = temp;
+        }
+        
+        for (int i = 0; i < itemTypes.Count; i++)
         {
             SpawnItem(i);
             yield return new WaitForSecondsRealtime(spawnDelay);
@@ -88,7 +108,7 @@ public class ItemSpawner : MonoBehaviour
 
     void SpawnItem(int index)
     {
-        bool isWood = Random.value < 0.7f; 
+        bool isWood = itemTypes[index];
         GameObject prefab = isWood ? woodPrefab : stonePrefab;
         Vector3 spawnPos = transform.position + new Vector3(0, index * itemSpacing, 0);
         GameObject newItem = Instantiate(prefab, spawnPos, Quaternion.identity);
@@ -111,18 +131,19 @@ public class ItemSpawner : MonoBehaviour
         // Check if GameModeManager timer has expired (only after spawning is complete)
         if (timerStarted && GameModeManager.Instance != null && GameModeManager.Instance.timer <= 0)
         {
-            // Time's up - check if player broke at least 6 boards
+            // Time's up - check if player broke at least 10 boards
             gameEnded = true;
             GameModeManager.Instance.StopTimerExternally();
             
             bool success = boardsBroken >= minBoardsToWin;
-            GameModeManager.Instance.ResolveMinigame(success);
+            int timeBonus = 0; // No bonus if time ran out
+            GameModeManager.Instance.ResolveMinigame(success, timeBonus);
             enabled = false;
             return;
         }
 
-        // WIN CONDITION (all items gone - broken or vanished)
-        if (!isSpawning && woodStack.Count == 0 && !gameEnded)
+        // WIN CONDITION (10 boards broken)
+        if (!isSpawning && boardsBroken >= minBoardsToWin && !gameEnded)
         {
             gameEnded = true;
             
@@ -132,8 +153,9 @@ public class ItemSpawner : MonoBehaviour
                 GameModeManager.Instance.StopTimerExternally();
             }
             
-            bool success = boardsBroken >= minBoardsToWin;
-            GameModeManager.Instance.ResolveMinigame(success);
+            // Calculate time bonus (remaining seconds)
+            int timeBonus = Mathf.Max(0, Mathf.FloorToInt(GameModeManager.Instance.timer));
+            GameModeManager.Instance.ResolveMinigame(true, timeBonus);
             enabled = false;
             return;
         }
