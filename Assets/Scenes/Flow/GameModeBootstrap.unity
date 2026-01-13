@@ -148,15 +148,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be7a1c6b4f8da944a9c69b7c18c16215, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  lives: 3
   score: 0
+  lastMinigameScore: 0
   currentMode: 0
   minigamesCompletedInMode: 0
-  minigamesPerMode: 3
+  gamesPerMode: 6
+  godModeGames: 10
   timer: 0
-  transitionSceneName: TempTransition
-  transitionDelay: 2
-  gameOverSceneName: TempGameOver
+  transitionScene: ModeDisplay
+  gameStartScene: GameStart
+  gameEndScene: GameEnd
+  nameInputScene: NameInput
+  landingPage: LandingPage
+  sceneDelay: 2.5
 --- !u!4 &529308997
 Transform:
   m_ObjectHideFlags: 0

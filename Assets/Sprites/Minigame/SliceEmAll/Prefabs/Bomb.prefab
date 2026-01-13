@@ -105,6 +105,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   explosionPrefab: {fileID: 6282423172855077869, guid: 08a66150491b841979759036038ccb89, type: 3}
   sliceVFXPrefab: {fileID: 22464577733371832, guid: fc827908ca17e864fa003da21f901714, type: 3}
+  sliceSFX: {fileID: 8300000, guid: a71f94da6a6f74146aaf2e26bce2ce28, type: 3}
+  explosionSFX: {fileID: 8300000, guid: 3a879b0b4d07b4a4ca78687f3aa2d9b2, type: 3}
 --- !u!114 &7312720521732269739
 MonoBehaviour:
   m_ObjectHideFlags: 0

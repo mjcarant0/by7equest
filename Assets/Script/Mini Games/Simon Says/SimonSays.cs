@@ -8,6 +8,10 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     public SpriteRenderer background;
     public KeyCode playerKey = KeyCode.Space;
     public TextMeshProUGUI commandDisplay;
+    public SpriteButton spriteButton;
+
+    public AudioClip correctSFX;
+    public AudioClip wrongSFX;
 
     private string[] commandOptions = new string[]
     {
@@ -29,6 +33,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     public float timeLimit = 12f;
     private float timer;
     private bool gameEnded = false;
+    private bool resultSent = false;
 
     void Start()
     {
@@ -38,16 +43,28 @@ public class SimonSaysLinkedListUI : MonoBehaviour
     void StartGame()
     {
         if (GameModeManager.Instance != null)
+        {
+            timer = GameModeManager.Instance.GetTimeLimitForExternalCall();
+            
+            // Adjust speed based on difficulty
+            float speedMultiplier = GetSpeedMultiplier();
+            commandTime /= speedMultiplier;
+            feedbackTime /= speedMultiplier;
+        }
+        else
+        {
             timer = timeLimit;
+        }
 
         background.color = Color.black;
 
         mistakes = 0;
         correctCount = 0;
         gameEnded = false;
+        resultSent = false;
 
-        // Player needs 2–5 correct commands to win
-        requiredCorrect = Random.Range(2, 6);
+        // Player needs 5 correct commands to win
+        requiredCorrect = 5;
 
         commandSequence = new LinkedList<string>();
 
@@ -66,9 +83,7 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         if (timer <= 0f)
         {
             timer = 0f;
-            gameEnded = true;
-            commandDisplay.text = "";
-            GameModeManager.Instance.MinigameFailed();
+            EndGame(false);
         }
     }
 
@@ -84,50 +99,83 @@ public class SimonSaysLinkedListUI : MonoBehaviour
 
         while (true) // infinite loop
         {
+            if (gameEnded) yield break;
+
             string cmd = currentNode.Value;
             commandDisplay.text = cmd;
 
-            bool pressed = false;
-            float timer = 0f;
+            // Arm the button for this new command
+            if (spriteButton != null)
+                spriteButton.ArmForNewCommand();
 
-            while (timer < commandTime)
+            bool pressed = false;
+            float commandTimer = 0f;
+
+            while (commandTimer < commandTime)
             {
                 if (Input.GetKeyDown(playerKey))
+                {
                     pressed = true;
+                    if (spriteButton != null)
+                        spriteButton.TryPlay();
+                }
 
-                timer += Time.deltaTime;
+                commandTimer += Time.deltaTime;
                 yield return null;
             }
 
             bool correct = CheckCommand(cmd, pressed);
+
+            if (SoundManager.Instance != null)
+            {
+                if (correct && correctSFX != null)
+                    SoundManager.Instance.PlaySFX(correctSFX);
+                else if (!correct && wrongSFX != null)
+                    SoundManager.Instance.PlaySFX(wrongSFX);
+            }
 
             background.color = correct ? Color.green : Color.red;
 
             if (correct)
                 correctCount++;
             else
+            {
                 mistakes++;
+
+                // Deduct time based on mistake count
+                if (mistakes == 1)
+                    timer -= 1f;
+                else if (mistakes == 2)
+                    timer -= 3f;
+                else if (mistakes == 3)
+                    timer -= 5f;
+                else if (mistakes >= 4)
+                {
+                    // 4th mistake: deduct life
+                    mistakes = 0;
+                    EndGame(false); // This will deduct a life via GameModeManager
+                    yield break;
+                }
+
+                // Clamp timer to non-negative before checking expiry
+                if (timer < 0f) timer = 0f;
+
+                // Check if time penalty caused time to run out
+                if (timer <= 0f)
+                {
+                    timer = 0f;
+                    EndGame(false);
+                    yield break;
+                }
+            }
 
             yield return new WaitForSecondsRealtime(feedbackTime);
             background.color = Color.black;
 
-            // ❌ GAME OVER (3 mistakes)
-            if (mistakes >= 3)
-            {
-                gameEnded = true;
-                commandDisplay.text = "";
-                StopAllCoroutines();
-                GameModeManager.Instance.MinigameFailed();
-                yield break;
-            }
-
-            // ✅ WIN (2–5 correct commands)
+            // WIN (5 correct commands)
             if (correctCount >= requiredCorrect)
             {
-                gameEnded = true;
-                commandDisplay.text = "";
-                StopAllCoroutines();
-                GameModeManager.Instance.MinigameCompleted();
+                EndGame(true);
                 yield break;
             }
 
@@ -149,5 +197,29 @@ public class SimonSaysLinkedListUI : MonoBehaviour
         if (cmd == "Don't press me") return pressed;
 
         return false;
+    }
+
+    float GetSpeedMultiplier()
+    {
+        switch (GameModeManager.Instance.currentMode)
+        {
+            case GameModeManager.GameMode.Easy: return 1.0f;
+            case GameModeManager.GameMode.Medium: return 1.3f;
+            case GameModeManager.GameMode.Hard: return 1.6f;
+            case GameModeManager.GameMode.God: return 2.0f;
+            default: return 1.0f;
+        }
+    }
+
+    void EndGame(bool success)
+    {
+        if (resultSent) return;
+
+        resultSent = true;
+        gameEnded = true;
+        commandDisplay.text = "";
+
+        StopAllCoroutines();
+        GameModeManager.Instance.ResolveMinigame(success);
     }
 }

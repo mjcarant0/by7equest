@@ -1,5 +1,3 @@
-/// This script manages scene transitions in the Unity application.
-
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -8,7 +6,7 @@ public class SceneManagerController : MonoBehaviour
     // Function to load the ScorePage
     public void LoadScorePage()
     {
-        SceneManager.LoadScene("ScorePage");
+        SceneManager.LoadScene("ScoreScene");
     }
 
     // Function to load the CreditsPage
@@ -17,9 +15,10 @@ public class SceneManagerController : MonoBehaviour
         SceneManager.LoadScene("CreditsPage");
     }
 
-    // Function to load the LandingPage
-    public void LoadLandingPage()
+    // Function to load the LandingPage (ng exit button)
+    public void OnExitButtonClicked()
     {
+        Debug.Log("[SceneManager] Exit button clicked, returning to Landing Page");
         SceneManager.LoadScene("LandingPage");
     }
 

@@ -1,77 +1,162 @@
 using UnityEngine;
 using System.Collections;
+using TMPro;
 
-[RequireComponent(typeof(SpriteRenderer))]
-public class GameStartAnimation : MonoBehaviour
+namespace Flow
 {
-    [Header("Sliced sprites (in order)")]
-    public Sprite[] frames;
-
-    [Header("Animation Settings")]
-    public float frameDelay = 0.08f;
-    public bool loop = false;
-
-    [Header("Zoom In (Last Frame)")]
-    public bool zoomOnLastFrame = true;
-    public float zoomScale = 2.5f;      // how big it gets
-    public float zoomDuration = 0.5f;   // how fast the zoom is
-
-    private SpriteRenderer sr;
-    private Vector3 originalScale;
-
-    // Event to notify when animation finishes
-    public System.Action OnAnimationFinished;
-
-    void Start()
+    [RequireComponent(typeof(SpriteRenderer))]
+    public class GameStartAnimation : MonoBehaviour
     {
-        sr = GetComponent<SpriteRenderer>();
-        originalScale = transform.localScale;
-
-        if (frames == null || frames.Length == 0)
+        [Header("Door Opening Frames (in order)")]
+        public Sprite[] doorFrames;
+        
+        [Header("Animation Settings")]
+        public float frameDelay = 0.08f;
+        
+        [Header("Zoom Out Effect")]
+        public bool zoomOnLastFrame = true;
+        public float endScale = 2.5f;
+        public float zoomDuration = 0.5f;
+        
+        [Header("Title Display")]
+        public TextMeshProUGUI titleText;
+        public CanvasGroup titleCanvasGroup;
+        public string minigameTitle = "Memory Match";
+        public float titleFadeInDuration = 0.5f;
+        public float titleDisplayDuration = 2f;
+        
+        [Header("Title Description GameObjects")]
+        public GameObject karateTitleDescription;
+        public GameObject simonSaysTitleDescription;
+        public GameObject sliceEmAllTitleDescription;
+        
+        [Header("Countdown")]
+        public Sprite[] countdownSprites;
+        public float countdownDelay = 0.8f;
+        
+        private SpriteRenderer sr;
+        private Vector3 originalScale;
+        private GameObject currentTitleObject;
+        
+        public System.Action OnAnimationFinished;
+        
+        void Start()
         {
-            Debug.LogError("GameStartAnimation: No frames assigned!");
-            return;
+            sr = GetComponent<SpriteRenderer>();
+            originalScale = transform.localScale;
+            
+            // Ensure the UI is hidden at the very start
+            if (titleCanvasGroup != null) titleCanvasGroup.alpha = 0f;
+            
+            // Turn off all description objects initially
+            if (karateTitleDescription != null) karateTitleDescription.SetActive(false);
+            if (simonSaysTitleDescription != null) simonSaysTitleDescription.SetActive(false);
+            if (sliceEmAllTitleDescription != null) sliceEmAllTitleDescription.SetActive(false);
         }
-
-        StartCoroutine(PlayAnimation());
-    }
-
-    IEnumerator PlayAnimation()
-    {
-        for (int i = 0; i < frames.Length; i++)
+        
+        public void StartAnimation()
         {
-            sr.sprite = frames[i];
-            yield return new WaitForSeconds(frameDelay);
-        }
-
-        if (zoomOnLastFrame)
-        {
-            yield return StartCoroutine(ZoomIn());
-        }
-
-        // Notify subscribers that animation + zoom finished
-        OnAnimationFinished?.Invoke();
-
-        if (loop)
-        {
-            transform.localScale = originalScale;
             StartCoroutine(PlayAnimation());
         }
-    }
 
-    IEnumerator ZoomIn()
-    {
-        float elapsed = 0f;
-        Vector3 targetScale = originalScale * zoomScale;
-
-        while (elapsed < zoomDuration)
+        IEnumerator PlayAnimation()
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / zoomDuration;
-            transform.localScale = Vector3.Lerp(originalScale, targetScale, t);
-            yield return null;
+            // STEP 0: Activate title/description immediately (outside doors)
+            if (currentTitleObject != null)
+                currentTitleObject.SetActive(true);
+
+            if (titleText != null)
+                titleText.gameObject.SetActive(true);
+
+            // Start fade-in of title (non-blocking)
+            StartCoroutine(FadeTitle(0f, 1f, titleFadeInDuration));
+
+            // STEP 1: Play door opening animation frame by frame
+            for (int i = 0; i < doorFrames.Length; i++)
+            {
+                sr.sprite = doorFrames[i];
+                yield return new WaitForSeconds(frameDelay);
+            }
+
+            // STEP 2: Zoom on last frame of door
+            if (zoomOnLastFrame)
+            {
+                yield return StartCoroutine(ZoomOut());
+            }
+
+            // STEP 3: Wait for title display duration
+            yield return new WaitForSeconds(titleDisplayDuration);
+
+            // STEP 4: Fade out title/description
+            yield return StartCoroutine(FadeTitle(1f, 0f, titleFadeInDuration));
+
+            if (titleText != null)
+                titleText.gameObject.SetActive(false);
+            if (currentTitleObject != null)
+                currentTitleObject.SetActive(false);
+
+            // STEP 5: Play countdown if any
+            if (countdownSprites != null && countdownSprites.Length > 0)
+            {
+                for (int i = 0; i < countdownSprites.Length; i++)
+                {
+                    sr.sprite = countdownSprites[i];
+                    yield return new WaitForSeconds(countdownDelay);
+                }
+            }
+
+            // STEP 6: Notify animation finished
+            OnAnimationFinished?.Invoke();
         }
 
-        transform.localScale = targetScale;
+        IEnumerator ZoomOut()
+        {
+            float elapsed = 0f;
+            Vector3 start = originalScale;
+            Vector3 end = originalScale * endScale;
+
+            while (elapsed < zoomDuration)
+            {
+                elapsed += Time.deltaTime;
+                transform.localScale = Vector3.Lerp(start, end, elapsed / zoomDuration);
+                yield return null;
+            }
+            
+            transform.localScale = end;
+        }
+        
+        IEnumerator FadeTitle(float from, float to, float duration)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                if (titleCanvasGroup != null)
+                    titleCanvasGroup.alpha = Mathf.Lerp(from, to, elapsed / duration);
+                yield return null;
+            }
+
+            if (titleCanvasGroup != null)
+                titleCanvasGroup.alpha = to;
+        }
+        
+        public void SetTitle(string title)
+        {
+            minigameTitle = title;
+            if (titleText != null) titleText.text = title;
+            
+            // Hide all descriptions first to reset
+            if (karateTitleDescription != null) karateTitleDescription.SetActive(false);
+            if (simonSaysTitleDescription != null) simonSaysTitleDescription.SetActive(false);
+            if (sliceEmAllTitleDescription != null) sliceEmAllTitleDescription.SetActive(false);
+            
+            // Match the string from MinigameRandomizer
+            string lowerTitle = title.ToLower();
+            if (lowerTitle.Contains("karate")) currentTitleObject = karateTitleDescription;
+            else if (lowerTitle.Contains("simon")) currentTitleObject = simonSaysTitleDescription;
+            else if (lowerTitle.Contains("slice") || lowerTitle.Contains("smash")) currentTitleObject = sliceEmAllTitleDescription;
+            
+            Debug.Log($"[GameStartAnimation] Title set to: {title}. Description Object assigned: {(currentTitleObject != null ? currentTitleObject.name : "None")}");
+        }
     }
 }

@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class SmashEmAllManager : MonoBehaviour
 {
-    public static GameManager Instance;
+    public static SmashEmAllManager Instance;
 
     public int sliceGoal = 10;
     private int currentSlices;
@@ -28,7 +28,12 @@ public class GameManager : MonoBehaviour
         currentSlices = 0;
         gameEnded = false;
 
+        // Reset static state for SliceEmAll
+        MoveAlongConveyor.ResetSliceEmAll();
+
         if (GameModeManager.Instance != null)
+            timer = GameModeManager.Instance.GetTimeLimitForExternalCall();
+        else
             timer = timeLimit;
     }
 
@@ -57,7 +62,7 @@ public class GameManager : MonoBehaviour
         if (gameEnded) return;
 
         gameEnded = true;
-        GameModeManager.Instance.MinigameCompleted();
+        GameModeManager.Instance.ResolveMinigame(true);
     }
 
     public void LoseGame()
@@ -65,7 +70,7 @@ public class GameManager : MonoBehaviour
         if (gameEnded) return;
 
         gameEnded = true;
-        GameModeManager.Instance.MinigameFailed();
+        GameModeManager.Instance.ResolveMinigame(false);
     }
 
     void OnDestroy()

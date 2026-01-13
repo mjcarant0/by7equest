@@ -6,172 +6,312 @@ public class GameModeManager : MonoBehaviour
 {
     public static GameModeManager Instance;
 
-    public enum GameMode
-    {
-        Easy,
-        Medium,
-        Hard,
-        God
-    }
+    public enum GameMode { Easy, Medium, Hard, God }
 
-    [Header("Player Stats")]
-    public int lives = 3;
+    [Header("Player Stats - Persistent Across Scenes")]
+    [Tooltip("Total accumulated score across all minigames and modes")]
     public int score = 0;
 
-    [Header("Difficulty Progression")]
+    [Tooltip("Score earned in the most recent minigame (for display purposes)")]
+    public int lastMinigameScore = 0;
+
+    [Header("Difficulty Progression - Game Loop Control")]
+    [Tooltip("Current difficulty mode (Easy→Medium→Hard→God)")]
     public GameMode currentMode = GameMode.Easy;
+
+    [Tooltip("Tracks completed minigames in current mode. Resets to 0 when advancing modes.")]
     public int minigamesCompletedInMode = 0;
-    public int minigamesPerMode = 3;
+
+    [Tooltip("Required games per mode for Easy/Medium/Hard (mechanic: 6)")]
+    public int gamesPerMode = 6;
+
+    [Tooltip("God mode is unlimited; this is ignored")]
+    public int godModeGames = 0;
 
     [Header("Timer")]
     public float timer;
     private bool timerRunning;
+    private bool isGameOver = false;
+    private bool isResolvingMinigame = false;
 
-    [Header("Transition")]
-    public string transitionSceneName = "TempTransition";
-    public float transitionDelay = 2f;
+    [Header("Scene Names")]
+    public string transitionScene = "ModeDisplay";
+    public string gameStartScene = "GameStart";
+    public string gameEndScene = "GameEnd";
+    public string scoreScene = "ScoreScene";
+    public string closingScene = "ClosingScene";
+    public string nameInputScene = "NameInput";
+    public string landingPage = "LandingPage";
 
-    [Header("Game Over")]
-    public string gameOverSceneName = "TempGameOver";
+    public float sceneDelay = 2.5f;
 
-    void Awake()
+    [Header("Closing Scene Video")]
+    [Tooltip("Duration to wait for the closing scene video before loading NameInput")]
+    public float closingSceneVideoDuration = 5f;
+
+    private void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Debug.Log("[GameModeManager] Instance created and set to DontDestroyOnLoad");
         }
         else
         {
+            Debug.LogWarning("[GameModeManager] Duplicate found, destroying");
             Destroy(gameObject);
+            return;
         }
     }
 
-    void OnEnable()
+    public void ResolveMinigame(bool success, int timeBonus = 0)
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnDisable()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        Time.timeScale = 1f;
-
-        // Reset specific minigame data if needed
-        if (scene.name == "SliceEmAll")
+        if (Instance == null)
         {
-            MoveAlongConveyor.ResetSliceEmAll();
-            FruitSlice.currentCenterFruit = null;
-            BombExplode.currentCenterBomb = null;
+            Debug.LogError("[GameModeManager] Instance is null in ResolveMinigame!");
+            return;
         }
+
+        // Prevent duplicate resolution calls
+        if (isResolvingMinigame)
+        {
+            Debug.LogWarning("[GameModeManager] ResolveMinigame already called, ignoring duplicate call");
+            return;
+        }
+
+        isResolvingMinigame = true;
+        timerRunning = false;
+
+        // Base score per mode
+        int baseScore = GetBaseScoreForExternalCall();
+        int total = success ? (baseScore + timeBonus) : 0;
+
+        // God mode: score and bonus are doubled
+        if (success && currentMode == GameMode.God)
+        {
+            total *= 2;
+        }
+
+        lastMinigameScore = total;
+        score += lastMinigameScore;
+
+        Debug.Log($"[GameModeManager] Minigame resolved. Success: {success}, Score added: {lastMinigameScore}, Total score: {score}");
+
+        StartCoroutine(PostGameSequence());
     }
 
-    void Update()
+    private IEnumerator PostGameSequence()
+    {
+        Debug.Log("[GameModeManager] Starting post-game sequence");
+
+        // Show Game End animation
+        Debug.Log("[GameModeManager] Loading Game End Scene");
+        SceneManager.LoadScene(gameEndScene);
+        yield return new WaitForSecondsRealtime(sceneDelay);
+
+        // Check if game is over (no lives left) - this will be set by HeartUIHandler
+        if (isGameOver)
+        {
+            Debug.Log("[GameModeManager] Game Over detected, PostGameSequence stopping - FinalizeSession will handle end sequence");
+            yield break;
+        }
+
+        minigamesCompletedInMode++;
+        Debug.Log($"[GameModeManager] Completed {minigamesCompletedInMode} games in {currentMode} mode");
+
+        // If in God mode, never complete; keep loading next minigame
+        if (currentMode == GameMode.God)
+        {
+            Debug.Log("[GameModeManager] God mode is unlimited, continuing in God mode");
+            SceneManager.LoadScene(gameStartScene);
+            yield break;
+        }
+
+        // Check if current mode is complete (Easy/Medium/Hard)
+        int requiredGames = gamesPerMode;
+        if (minigamesCompletedInMode >= requiredGames)
+        {
+            // Mode complete
+            GameMode previousMode = currentMode;
+            minigamesCompletedInMode = 0;
+            AdvanceDifficulty();
+            Debug.Log($"[GameModeManager] Completed {requiredGames} games in {previousMode}, advancing to {currentMode}");
+
+            // Show transition, then it will load Game Start
+            yield return StartCoroutine(ShowModeTransition(currentMode));
+            yield break;
+        }
+
+        // Continue in current mode - go directly to Game Start
+        Debug.Log($"[GameModeManager] Continuing in {currentMode} mode ({minigamesCompletedInMode}/{requiredGames}), loading Game Start");
+        SceneManager.LoadScene(gameStartScene);
+    }
+
+    private IEnumerator ShowModeTransition(GameMode newMode)
+    {
+        Debug.Log($"[GameModeManager] Showing transition to {newMode}");
+        SceneManager.LoadScene(transitionScene);
+        yield break;
+    }
+
+    private IEnumerator ShowEndSequence()
+    {
+        Debug.Log("[GameModeManager] Starting end sequence: GameEnd → ClosingScene (ClosingScene will handle progression to NameInput)");
+
+        // GameEnd is already loaded by PostGameSequence, wait for it to display
+        Debug.Log("[GameModeManager] GameEnd showing (score displayed)");
+        yield return new WaitForSecondsRealtime(sceneDelay);
+
+        Debug.Log("[GameModeManager] Loading ClosingScene - video will play and handle NameInput transition");
+        SceneManager.LoadScene(closingScene);
+        // ClosingScene controller will load NameInput when its video finishes
+    }
+
+    private GameMode AdvanceDifficulty()
+    {
+        switch (currentMode)
+        {
+            case GameMode.Easy:
+                currentMode = GameMode.Medium;
+                break;
+            case GameMode.Medium:
+                currentMode = GameMode.Hard;
+                break;
+            case GameMode.Hard:
+                currentMode = GameMode.God;
+                break;
+            case GameMode.God:
+                // Stay in God mode
+                break;
+        }
+        return currentMode;
+    }
+
+    public void LoadNextMinigame()
+    {
+        if (MinigameRandomizer.Instance == null)
+        {
+            Debug.LogError("[GameModeManager] MinigameRandomizer not found!");
+            return;
+        }
+
+        // Reset resolution flag for next minigame
+        isResolvingMinigame = false;
+        
+        timer = GetTimeLimitForExternalCall();
+        MinigameRandomizer.Instance.LoadNextMinigame();
+    }
+
+    public void FinalizeSession(string playerName = "")
+    {
+        // If called with player name (from NameInput scene), always allow it to load landing page
+        if (!string.IsNullOrEmpty(playerName))
+        {
+            Debug.Log($"[GameModeManager] Session finalized: {playerName} - {score} - {currentMode}");
+            isGameOver = true;
+            StopAllCoroutines();
+            ResetGame();
+            HeartUIHandler.StaticResetLives();
+            SceneManager.LoadScene(landingPage);
+            return;
+        }
+
+        // For game-over-from-loss path, check if already called
+        if (isGameOver)
+        {
+            Debug.Log("[GameModeManager] FinalizeSession already called, ignoring duplicate");
+            return;
+        }
+
+        isGameOver = true;
+        Debug.Log($"[GameModeManager] Game Over triggered! Score: {score}, Mode: {currentMode}");
+
+        // Stop any running coroutines to prevent conflicts
+        StopAllCoroutines();
+
+        // Called from HeartUIHandler when lives reach 0 - start end sequence
+        StartCoroutine(ShowEndSequence());
+    }
+
+    private void ResetGame()
+    {
+        Debug.Log("[GameModeManager] Resetting game state");
+        score = 0;
+        lastMinigameScore = 0;
+        minigamesCompletedInMode = 0;
+        currentMode = GameMode.Easy;
+        isGameOver = false;
+    }
+
+    public void StartTimerExternally()
+    {
+        timerRunning = true;
+        Debug.Log($"[GameModeManager] Timer started: {timer}s for {currentMode} mode");
+    }
+
+    public void StopTimerExternally()
+    {
+        timerRunning = false;
+        Debug.Log($"[GameModeManager] Timer stopped externally");
+    }
+
+    private void Update()
     {
         if (!timerRunning) return;
 
         timer -= Time.deltaTime;
-
         if (timer <= 0f)
         {
-            MinigameFailed();
+            Debug.Log("[GameModeManager] Timer expired! Resolving as failure");
+            timerRunning = false;
+            ResolveMinigame(false);
         }
     }
 
-    // External calls for minigame handling
-    public float GetTimeLimitForExternalCall()
+    public int GetTotalScore()
     {
-        switch (currentMode)
-        {
-            case GameMode.Medium: return 25f;
-            case GameMode.Hard:   return 20f;
-            case GameMode.God:    return 10f;
-            default:              return 30f;
-        }
+        return score;
+    }
+
+    public GameMode GetCurrentMode()
+    {
+        return currentMode;
     }
 
     public int GetBaseScoreForExternalCall()
     {
         switch (currentMode)
         {
+            case GameMode.Easy: return 20;
             case GameMode.Medium: return 50;
-            case GameMode.Hard:   return 100;
-            case GameMode.God:    return 200;
-            default:              return 20;
+            case GameMode.Hard: return 100;
+            case GameMode.God: return 200;
+            default: return 20;
         }
     }
 
-    public void StartTimerExternally()
+    public float GetTimeLimitForExternalCall()
     {
-        timerRunning = true;
-    }
-
-    // Game progression
-    void AdvanceDifficulty()
-    {
-        minigamesCompletedInMode = 0;
-
-        if (currentMode == GameMode.God)
+        switch (currentMode)
         {
-            Debug.Log("MAX DIFFICULTY REACHED");
-            return;
-        }
-
-        currentMode++;
-        Debug.Log("Difficulty increased to: " + currentMode);
-    }
-
-    public void MinigameCompleted(int timeBonus = 0)
-    {
-        timerRunning = false;
-
-        int points = GetBaseScoreForExternalCall() + timeBonus;
-
-        if (currentMode == GameMode.God)
-        {
-            points *= 2;
-        }
-
-        score += points;
-        minigamesCompletedInMode++;
-
-        if (minigamesCompletedInMode >= minigamesPerMode)
-        {
-            StartCoroutine(ModeTransitionRoutine());
+            case GameMode.Easy: return 25f;
+            case GameMode.Medium: return 20f;
+            case GameMode.Hard: return 15f;
+            case GameMode.God: return 10f;
+            default: return 25f;
         }
     }
 
-    public void MinigameFailed()
+    public void LoadGameStartScene()
     {
-        timerRunning = false;
-        lives--;
-
-        if (lives <= 0)
-        {
-            TriggerGameOver();
-        }
+        Debug.Log("[GameModeManager] Loading Game Start Scene");
+        SceneManager.LoadScene(gameStartScene);
     }
 
-    IEnumerator ModeTransitionRoutine()
+    public void LoadScoreSceneFromMenu()
     {
-        Time.timeScale = 0f;
-        SceneManager.LoadScene(transitionSceneName);
-
-        yield return new WaitForSecondsRealtime(transitionDelay);
-
-        Time.timeScale = 1f;
-        AdvanceDifficulty();
-    }
-
-    void TriggerGameOver()
-    {
-        Debug.Log("GAME OVER");
-
-        Time.timeScale = 0f;
-        SceneManager.LoadScene(gameOverSceneName);
+        Debug.Log("[GameModeManager] Loading Score Scene from menu");
+        SceneManager.LoadScene(scoreScene);
     }
 }
