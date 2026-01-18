@@ -52,12 +52,28 @@ public class NameInputController : MonoBehaviour
 
         Debug.Log($"[NameInput] Player name submitted: {playerName}");
 
+        // CRITICAL: Cache score NOW before GameModeManager might be destroyed
+        int cachedScore = 0;
+        if (GameModeManager.Instance != null)
+        {
+            cachedScore = GameModeManager.Instance.score;
+            Debug.Log($"[NameInput] Cached score from GameModeManager: {cachedScore}");
+        }
+        else
+        {
+            Debug.LogWarning("[NameInput] GameModeManager.Instance is already null, score will be 0");
+        }
+
         // Always create fresh connection to ensure unique account for each submission
         if (PlayFabDatabase.Instance != null)
         {
             Debug.Log("[NameInput] Creating fresh database connection...");
-            PlayFabDatabase.Instance.ConnectToDatabase(playerName);
-            StartCoroutine(WaitForConnectionAndSave(playerName));
+            
+            // Pass save logic as callback to execute immediately after connection
+            PlayFabDatabase.Instance.ConnectToDatabase(playerName, () => {
+                Debug.Log("[NameInput] ✓ Connection callback fired! Saving data...");
+                OnConnectionSuccess(playerName, cachedScore);
+            });
         }
         else
         {
@@ -65,75 +81,55 @@ public class NameInputController : MonoBehaviour
         }
     }
 
-    private IEnumerator WaitForConnectionAndSave(string playerName)
+    private void OnConnectionSuccess(string playerName, int cachedScore)
     {
-        // Wait up to 5 seconds for connection
-        float timeout = 5f;
-        float elapsed = 0f;
-
-        while (!PlayFabDatabase.Instance.IsConnected() && elapsed < timeout)
+        Debug.Log($"[NameInput] Executing save with name={playerName}, score={cachedScore}");
+        
+        if (cachedScore <= 0)
         {
-            yield return new WaitForSeconds(0.5f);
-            elapsed += 0.5f;
+            Debug.LogWarning("[NameInput] WARNING: Score is 0 or negative! Check if game was played.");
         }
-
-        if (PlayFabDatabase.Instance.IsConnected())
+        
+        PlayFabDatabase.Instance.SaveToDatabase(playerName, cachedScore, (success) =>
         {
-            Debug.Log("[NameInput] Database connected, saving data...");
-            
-            // Get the final score from GameModeManager
-            if (GameModeManager.Instance != null)
+            if (success)
             {
-                int finalScore = GameModeManager.Instance.score;
-                Debug.Log($"[NameInput] Score to save: {finalScore}");
+                Debug.Log($"[NameInput] ✓ Data saved to database successfully! ({playerName} - {cachedScore})");
                 
-                if (finalScore <= 0)
+                // Refresh leaderboard if the scene is already loaded
+                ScoreSceneLeaderboard leaderboardUI = UnityEngine.Object.FindFirstObjectByType<ScoreSceneLeaderboard>();
+                if (leaderboardUI != null)
                 {
-                    Debug.LogWarning("[NameInput] WARNING: Score is 0 or negative! Check if GameModeManager.score was set properly.");
+                    Debug.Log("[NameInput] Refreshing leaderboard UI after save...");
+                    leaderboardUI.RefreshLeaderboard();
                 }
-                
-                PlayFabDatabase.Instance.SaveToDatabase(playerName, finalScore, (success) =>
-                {
-                    if (success)
-                    {
-                        Debug.Log($"[NameInput] ✓ Data saved to database successfully! ({playerName} - {finalScore})");
-                    }
-                    else
-                    {
-                        Debug.LogError($"[NameInput] ✗ Failed to save data to database! ({playerName} - {finalScore})");
-                    }
-                    
-                    // Reset submit flag before finalizing
-                    submitInProgress = false;
-                    if (submitButton != null) submitButton.interactable = true;
-                    
-                    // Destroy old GameModeManager instance now that score is saved
-                    GameModeManager.Instance.DestroyOldInstance();
-                    
-                    // Continue to finalize session regardless of save result
-                    GameModeManager.Instance.FinalizeSession(playerName);
-                });
             }
             else
             {
-                Debug.LogError("[NameInput] GameModeManager.Instance is null!");
-                submitInProgress = false;
-                if (submitButton != null) submitButton.interactable = true;
+                Debug.LogError($"[NameInput] ✗ Failed to save data to database! ({playerName} - {cachedScore})");
             }
-        }
-        else
-        {
-            Debug.LogError("[NameInput] Database connection timeout - data not saved");
             
-            // Reset submit flag
+            // Reset submit flag before finalizing
             submitInProgress = false;
             if (submitButton != null) submitButton.interactable = true;
             
+            // Destroy old GameModeManager instance now that score is saved (safe, we cached the score)
+            if (GameModeManager.Instance != null)
+            {
+                GameModeManager.Instance.DestroyOldInstance();
+            }
+            
+            // Continue to finalize session regardless of save result
             if (GameModeManager.Instance != null)
             {
                 GameModeManager.Instance.FinalizeSession(playerName);
             }
-        }
+            else
+            {
+                Debug.Log("[NameInput] GameModeManager already destroyed, returning to landing page manually");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("LandingPage");
+            }
+        });
     }
 
     private void OnNameChanged(string value)

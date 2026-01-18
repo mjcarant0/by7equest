@@ -1,4 +1,5 @@
 using UnityEngine;
+using PlayFab;
 using UnityEngine.SceneManagement;
 
 public class StartButton : MonoBehaviour
@@ -42,15 +43,26 @@ public class StartButton : MonoBehaviour
             Debug.Log("[StartButton] Created GameModeManager");
         }
 
-        // Reset game state for new session
+        // Reset game state for new session (clears flags like isGameOver)
         if (GameModeManager.Instance != null)
         {
-            GameModeManager.Instance.score = 0;
-            GameModeManager.Instance.lastMinigameScore = 0;
-            GameModeManager.Instance.currentMode = GameModeManager.GameMode.Easy;
-            GameModeManager.Instance.minigamesCompletedInMode = 0;
-            Debug.Log("[StartButton] Game state reset to Easy mode (no hearts system)");
+            GameModeManager.Instance.ResetForNewRun();
+            Debug.Log("[StartButton] New run initialized via GameModeManager.ResetForNewRun()");
         }
+
+        // Reset hearts/lives for a fresh run
+        HeartUIHandler.StaticResetLives();
+
+        // Reset PlayFab authentication so a new player can start clean
+        try
+        {
+            PlayFabClientAPI.ForgetAllCredentials();
+        }
+        catch { /* ignore if SDK not initialized yet */ }
+
+        // If using device-stable CustomId, clear it to avoid reusing the last player's account
+        PlayerPrefs.DeleteKey("PlayFabCustomId");
+        PlayerPrefs.Save();
 
         // Load Opening Scene (train animation - only at game start)
         Debug.Log("[StartButton] Loading Opening Scene");

@@ -340,4 +340,25 @@ public class GameModeManager : MonoBehaviour
         Debug.Log("[GameModeManager] Loading Score Scene from menu");
         SceneManager.LoadScene(scoreScene);
     }
+
+    public void ResetForNewRun()
+    {
+        Debug.Log("[GameModeManager] Initializing new run: clearing state and flags");
+        // Ensure no stale coroutines interfere with next run
+        StopAllCoroutines();
+
+        // Clear gameplay state
+        score = 0;
+        lastMinigameScore = 0;
+        lastMinigameBaseScore = 0;
+        lastMinigameBonus = 0;
+        minigamesCompletedInMode = 0;
+        currentMode = GameMode.Easy;
+
+        // Reset control flags and timers
+        isGameOver = false;
+        isResolvingMinigame = false;
+        timerRunning = false;
+        timer = 0f;
+    }
 }

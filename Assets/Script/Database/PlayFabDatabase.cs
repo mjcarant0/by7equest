@@ -15,6 +15,12 @@ public class PlayFabDatabase : MonoBehaviour
     [Header("Database Status")]
     public bool isConnected = false;
     public bool showDebugLogs = true; 
+    [Header("PlayFab Config")]
+    [Tooltip("Optional: Set Title ID here to avoid local secrets.")]
+    public string titleId;
+
+    // Connection state
+    private System.Action connectionSuccessCallback = null;
 
     private void Awake()
     {
@@ -50,17 +56,27 @@ public class PlayFabDatabase : MonoBehaviour
     /// <summary>
     /// Connect to PlayFab database using player name
     /// </summary>
-    public void ConnectToDatabase(string playerName)
+    public void ConnectToDatabase(string playerName, System.Action onSuccess = null)
     {
-        // Set Title ID from secrets file
-        if (!string.IsNullOrEmpty(PlayFabSecrets.TitleId) && PlayFabSecrets.TitleId != "YOUR_TITLE_ID_HERE")
+        // Reset connection state before fresh login to avoid stale cached state
+        isConnected = false;
+        connectionSuccessCallback = onSuccess;
+        LogDebug("[PlayFabDatabase] Resetting connection state for fresh login...");
+        
+        // Prefer Title ID from inspector override, then secrets file, else existing settings
+        if (!string.IsNullOrWhiteSpace(titleId))
+        {
+            PlayFabSettings.TitleId = titleId.Trim();
+            LogDebug("[PlayFabDatabase] Title ID set from inspector override");
+        }
+        else if (!string.IsNullOrEmpty(PlayFabSecrets.TitleId) && PlayFabSecrets.TitleId != "YOUR_TITLE_ID_HERE")
         {
             PlayFabSettings.TitleId = PlayFabSecrets.TitleId;
-            LogDebug($"[PlayFabDatabase] Title ID set from PlayFabSecrets");
+            LogDebug("[PlayFabDatabase] Title ID set from PlayFabSecrets");
         }
         else if (string.IsNullOrEmpty(PlayFabSettings.TitleId))
         {
-            Debug.LogError("[PlayFabDatabase] Title ID not set! Please configure PlayFabSecrets.cs with your Title ID.");
+            Debug.LogError("[PlayFabDatabase] Title ID not set! Please configure Title ID via inspector or PlayFabSecrets.cs.");
             return;
         }
 
@@ -70,7 +86,7 @@ public class PlayFabDatabase : MonoBehaviour
             playerName = "Anonymous";
         }
 
-        // Use GUID + player name to ensure completely unique account each time
+        // Always generate a fresh CustomId per connection to create a brand-new account
         string uniqueId = System.Guid.NewGuid().ToString() + "_" + playerName.ToLower().Trim();
         
         LogDebug($"[PlayFabDatabase] Connecting with name: {playerName}");
@@ -90,6 +106,14 @@ public class PlayFabDatabase : MonoBehaviour
     {
         isConnected = true;
         LogDebug($"[PlayFabDatabase] Connected! ID: {result.PlayFabId}");
+        
+        // Invoke success callback immediately (before next frame) to prevent coroutine death
+        if (connectionSuccessCallback != null)
+        {
+            LogDebug("[PlayFabDatabase] Invoking connection success callback...");
+            connectionSuccessCallback.Invoke();
+            connectionSuccessCallback = null;
+        }
     }
 
     private void OnConnectFailure(PlayFabError error)
@@ -135,7 +159,10 @@ public class PlayFabDatabase : MonoBehaviour
     /// Save player name and score to database
     public void SaveToDatabase(string playerName, int score, Action<bool> callback = null)
     {
-        if (!isConnected)
+        Debug.Log("[PlayFabDatabase] === SaveToDatabase CALLED ===");
+        Debug.Log($"[PlayFabDatabase] Input: playerName='{playerName}', score={score}");
+        
+        if (!IsConnected())
         {
             Debug.LogError("[PlayFabDatabase] Cannot save - not connected to database!");
             callback?.Invoke(false);
@@ -151,17 +178,21 @@ public class PlayFabDatabase : MonoBehaviour
         LogDebug($"[PlayFabDatabase] Saving to database: {playerName} - {score}");
 
         // First update display name
+        Debug.Log("[PlayFabDatabase] Step 1: Updating player name...");
         UpdatePlayerName(playerName, (nameSuccess) =>
         {
+            Debug.Log($"[PlayFabDatabase] Step 1 complete: nameSuccess={nameSuccess}");
             if (nameSuccess)
             {
-                // Then submit score
-                SubmitScoreToDatabase(score, callback);
+                // Then submit score and backup to PlayerData
+                Debug.Log("[PlayFabDatabase] Step 2: Submitting score...");
+                SubmitScoreToDatabase(playerName, score, callback);
             }
             else
             {
                 // Still try to submit score even if name update failed
-                SubmitScoreToDatabase(score, callback);
+                Debug.Log("[PlayFabDatabase] Step 2: Submitting score (despite name update failure)...");
+                SubmitScoreToDatabase(playerName, score, callback);
             }
         });
     }
@@ -173,22 +204,24 @@ public class PlayFabDatabase : MonoBehaviour
             DisplayName = playerName
         };
 
-        LogDebug($"[PlayFabDatabase] Updating player name: {playerName}");
+        Debug.Log($"[PlayFabDatabase] [UpdatePlayerName] Sending request with displayName='{playerName}'");
 
         PlayFabClientAPI.UpdateUserTitleDisplayName(request,
             (result) =>
             {
+                Debug.Log($"[PlayFabDatabase] [UpdatePlayerName] ✓ Success callback invoked!");
                 LogDebug($"[PlayFabDatabase] Player name updated successfully");
                 callback?.Invoke(true);
             },
             (error) =>
             {
+                Debug.LogError($"[PlayFabDatabase] [UpdatePlayerName] ✗ Error callback invoked!");
                 Debug.LogError($"[PlayFabDatabase] Failed to update name: {error.GenerateErrorReport()}");
                 callback?.Invoke(false);
             });
     }
 
-    private void SubmitScoreToDatabase(int score, Action<bool> callback)
+    private void SubmitScoreToDatabase(string playerName, int score, Action<bool> callback)
     {
         var request = new UpdatePlayerStatisticsRequest
         {
@@ -203,16 +236,39 @@ public class PlayFabDatabase : MonoBehaviour
             }
         };
 
-        LogDebug($"[PlayFabDatabase] Submitting score: {score}");
+        Debug.Log($"[PlayFabDatabase] [SubmitScoreToDatabase] Sending score request: StatisticName='HighScore', Value={score}");
 
         PlayFabClientAPI.UpdatePlayerStatistics(request,
             (result) =>
             {
+                Debug.Log("[PlayFabDatabase] [SubmitScoreToDatabase] ✓ UpdatePlayerStatistics success callback invoked!");
                 LogDebug("[PlayFabDatabase] ✓ Score saved to database successfully!");
+                // Verify stats are present right after saving for debugging
+                FetchAndLogPlayerStatistics();
+                // Also save to PlayerData as a backup for debugging/analytics
+                var dataReq = new UpdateUserDataRequest
+                {
+                    Data = new Dictionary<string, string>
+                    {
+                        { "PlayerName", playerName },
+                        { "HighScore", score.ToString() }
+                    }
+                };
+                Debug.Log($"[PlayFabDatabase] [SubmitScoreToDatabase] Saving PlayerData: PlayerName='{playerName}', HighScore={score}");
+                PlayFabClientAPI.UpdateUserData(dataReq,
+                    _ => { 
+                        Debug.Log("[PlayFabDatabase] [SubmitScoreToDatabase] ✓ UpdateUserData success callback invoked!");
+                        Debug.Log("[PlayFabDatabase] PlayerData saved (PlayerName, HighScore)"); 
+                    },
+                    err => { 
+                        Debug.LogError("[PlayFabDatabase] [SubmitScoreToDatabase] ✗ UpdateUserData error callback invoked!");
+                        Debug.LogWarning($"[PlayFabDatabase] Failed to save PlayerData: {err.GenerateErrorReport()}"); 
+                    });
                 callback?.Invoke(true);
             },
             (error) =>
             {
+                Debug.LogError("[PlayFabDatabase] [SubmitScoreToDatabase] ✗ UpdatePlayerStatistics error callback invoked!");
                 Debug.LogError($"[PlayFabDatabase] ✗ Failed to save score: {error.GenerateErrorReport()}");
                 Debug.LogError($"[PlayFabDatabase] Error details: {error.ErrorMessage}");
                 Debug.LogError($"[PlayFabDatabase] HTTP Code: {error.HttpCode}");
@@ -284,6 +340,34 @@ public class PlayFabDatabase : MonoBehaviour
     {
         // Check both our flag AND PlayFab's actual authentication state
         return isConnected && PlayFabClientAPI.IsClientLoggedIn();
+    }
+
+    private void FetchAndLogPlayerStatistics()
+    {
+        var req = new GetPlayerStatisticsRequest
+        {
+            StatisticNames = new List<string> { "HighScore" }
+        };
+
+        PlayFabClientAPI.GetPlayerStatistics(req,
+            res =>
+            {
+                if (res.Statistics == null || res.Statistics.Count == 0)
+                {
+                    Debug.LogWarning("[PlayFabDatabase] GetPlayerStatistics returned no entries for HighScore");
+                }
+                else
+                {
+                    foreach (var s in res.Statistics)
+                    {
+                        Debug.Log($"[PlayFabDatabase] Stat fetched → {s.StatisticName} = {s.Value} (ver {s.Version})");
+                    }
+                }
+            },
+            err =>
+            {
+                Debug.LogError($"[PlayFabDatabase] Failed to fetch player statistics: {err.GenerateErrorReport()}");
+            });
     }
 
     #endregion
