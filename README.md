@@ -119,13 +119,13 @@ See the [open issues](https://github.com/mjcarant0/by7equest/issues) for a full 
 
 | Name | Role | GitHub | LinkedIn |
 | :--- | :--- | :--- | :--- |
-| **Marjoy M. Caranto** | Team Lead & Project Manager | [@mjcarant0](https://github.com/mjcarant0) | [![LinkedIn][linkedin-shield]][linkedin-mj] |
+| **Marjoy M. Caranto** | Team Lead, UI/UX Lead, & Programmer | [@mjcarant0](https://github.com/mjcarant0) | [![LinkedIn][linkedin-shield]][linkedin-mj] |
 | **Francen Venisse E. Red** | QA Lead & Organizer | [@Francen-Red](https://github.com/Francen-Red) | [![LinkedIn][linkedin-shield]][linkedin-francen] |
 | **John Reydo A. Tinawin** | Game Writer & Documentation | [@jrtinawin16](https://github.com/jrtinawin16) | [![LinkedIn][linkedin-shield]][linkedin-john] |
 | **Margaret Sydney S. Laylo** | Programmer | [@dnlaylo](https://github.com/dnlaylo) | [![LinkedIn][linkedin-shield]][linkedin-margaret] |
 | **Mary Ruth P. Relator** | Programmer | [@MaryRuth17](https://github.com/MaryRuth17) | [![LinkedIn][linkedin-shield]][linkedin-mary] |
-| **Danielle Carl R. Diamante** | Game Designer | [@Carl-dc09](https://github.com/Carl-dc09) | - |
-| **Marian May Legaspi** | Game Designer | [@marianlegaspi-kuyarix](https://github.com/marianlegaspi-kuyarix) | [![LinkedIn][linkedin-shield]][linkedin-marian] |
+| **Danielle Carl R. Diamante** | Audio Director | [@Carl-dc09](https://github.com/Carl-dc09) | - |
+| **Marian May Legaspi** | Game Designer & UI/UX Co-Lead | [@marianlegaspi-kuyarix](https://github.com/marianlegaspi-kuyarix) | [![LinkedIn][linkedin-shield]][linkedin-marian] |
 
 **Project Link:** [https://github.com/mjcarant0/by7equest](https://github.com/mjcarant0/by7equest)
 
