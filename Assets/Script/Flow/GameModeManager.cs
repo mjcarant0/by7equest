@@ -1,6 +1,32 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using System.Collections.Generic;
+
+// Tree Node for Difficulty Progression
+public class DifficultyNode
+{
+    public string name;
+    public int baseScore;
+    public float timeLimit;
+    public DifficultyNode parent;
+    public List<DifficultyNode> children;
+
+    public DifficultyNode(string name, int baseScore, float timeLimit)
+    {
+        this.name = name;
+        this.baseScore = baseScore;
+        this.timeLimit = timeLimit;
+        this.children = new List<DifficultyNode>();
+        this.parent = null;
+    }
+
+    public void AddChild(DifficultyNode child)
+    {
+        children.Add(child);
+        child.parent = this;
+    }
+}
 
 public class GameModeManager : MonoBehaviour
 {
@@ -27,6 +53,10 @@ public class GameModeManager : MonoBehaviour
 
     [Tooltip("Tracks completed minigames in current mode. Resets to 0 when advancing modes.")]
     public int minigamesCompletedInMode = 0;
+
+    [Header("Tree Data Structure - Difficulty Progression")]
+    private DifficultyNode difficultyTree;
+    private DifficultyNode currentDifficultyNode;
 
     [Tooltip("Required games per mode for Easy/Medium/Hard (mechanic: 6)")]
     public int gamesPerMode = 6;
@@ -61,6 +91,7 @@ public class GameModeManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            InitializeDifficultyTree();
             Debug.Log("[GameModeManager] Instance created and set to DontDestroyOnLoad");
         }
         else
@@ -70,6 +101,29 @@ public class GameModeManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+    }
+
+    private void InitializeDifficultyTree()
+    {
+        // Root Node
+        difficultyTree = new DifficultyNode("Game Mode", 0, 0f);
+
+        // Create difficulty nodes with their properties
+        DifficultyNode easyNode = new DifficultyNode("Easy", 20, 25f);
+        DifficultyNode mediumNode = new DifficultyNode("Medium", 50, 20f);
+        DifficultyNode hardNode = new DifficultyNode("Hard", 100, 15f);
+        DifficultyNode godNode = new DifficultyNode("God", 200, 10f);
+
+        // Build tree: Root -> Easy -> Medium -> Hard -> God
+        difficultyTree.AddChild(easyNode);
+        easyNode.AddChild(mediumNode);
+        mediumNode.AddChild(hardNode);
+        hardNode.AddChild(godNode);
+
+        // Start at Easy
+        currentDifficultyNode = easyNode;
+
+        Debug.Log("[GameModeManager] Difficulty Tree initialized: Root -> Easy -> Medium -> Hard -> God");
     }
 
     public void ResolveMinigame(bool success, int timeBonus = 0)
@@ -184,19 +238,31 @@ public class GameModeManager : MonoBehaviour
 
     private GameMode AdvanceDifficulty()
     {
-        switch (currentMode)
+        // Use Tree traversal to advance difficulty
+        if (currentDifficultyNode.children.Count > 0)
         {
-            case GameMode.Easy:
+            currentDifficultyNode = currentDifficultyNode.children[0]; // Move to next child node
+            Debug.Log($"[Tree] Advanced to: {currentDifficultyNode.name} (Score: {currentDifficultyNode.baseScore}, Time: {currentDifficultyNode.timeLimit}s)");
+        }
+        else
+        {
+            Debug.Log($"[Tree] Already at max difficulty: {currentDifficultyNode.name}");
+        }
+
+        // Update enum to match tree node
+        switch (currentDifficultyNode.name)
+        {
+            case "Easy":
+                currentMode = GameMode.Easy;
+                break;
+            case "Medium":
                 currentMode = GameMode.Medium;
                 break;
-            case GameMode.Medium:
+            case "Hard":
                 currentMode = GameMode.Hard;
                 break;
-            case GameMode.Hard:
+            case "God":
                 currentMode = GameMode.God;
-                break;
-            case GameMode.God:
-                // Stay in God mode
                 break;
         }
         return currentMode;
@@ -258,6 +324,13 @@ public class GameModeManager : MonoBehaviour
         minigamesCompletedInMode = 0;
         currentMode = GameMode.Easy;
         isGameOver = false;
+
+        // Reset tree to Easy node
+        if (difficultyTree != null && difficultyTree.children.Count > 0)
+        {
+            currentDifficultyNode = difficultyTree.children[0]; // Back to Easy
+            Debug.Log("[Tree] Reset to Easy node");
+        }
     }
 
     public void DestroyOldInstance()
@@ -307,6 +380,13 @@ public class GameModeManager : MonoBehaviour
 
     public int GetBaseScoreForExternalCall()
     {
+        // Use Tree node data instead of switch statement
+        if (currentDifficultyNode != null)
+        {
+            return currentDifficultyNode.baseScore;
+        }
+
+        // Fallback to switch if tree not initialized
         switch (currentMode)
         {
             case GameMode.Easy: return 20;
@@ -319,6 +399,13 @@ public class GameModeManager : MonoBehaviour
 
     public float GetTimeLimitForExternalCall()
     {
+        // Use Tree node data instead of switch statement
+        if (currentDifficultyNode != null)
+        {
+            return currentDifficultyNode.timeLimit;
+        }
+
+        // Fallback to switch if tree not initialized
         switch (currentMode)
         {
             case GameMode.Easy: return 25f;
@@ -360,5 +447,12 @@ public class GameModeManager : MonoBehaviour
         isResolvingMinigame = false;
         timerRunning = false;
         timer = 0f;
+
+        // Reset tree to Easy node
+        if (difficultyTree != null && difficultyTree.children.Count > 0)
+        {
+            currentDifficultyNode = difficultyTree.children[0]; // Back to Easy
+            Debug.Log("[Tree] Reset to Easy node for new run");
+        }
     }
 }
