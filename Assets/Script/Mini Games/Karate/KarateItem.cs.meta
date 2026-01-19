@@ -1,0 +1,12 @@
+fileFormatVersion: 2
+guid: 4a1c1b960d5ece145bdd5cae5ccd0261
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - choppedWoodPrefab: {fileID: 5032720555736044141, guid: 61abe6e6346f5e240a985fb4727d4826, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
