@@ -31,12 +31,21 @@ public class OpeningVideoController : MonoBehaviour
 
         if (videoPlayer != null)
         {
+            // Force clear any hardcoded URL from Inspector
+            videoPlayer.url = string.Empty;
+            
             // Set video source to URL mode for WebGL compatibility
             videoPlayer.source = VideoSource.Url;
             
-            // Build path to video in StreamingAssets
+            // Build path to video in StreamingAssets (dynamic, works on any computer)
             string videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, videoFileName);
             videoPlayer.url = videoPath;
+            
+            // Validate that we're not using a hardcoded absolute path
+            if (videoPath.Contains(":") && !videoPath.StartsWith("http"))
+            {
+                Debug.LogWarning($"[OpeningVideo] Detected absolute path: {videoPath}. This may cause issues on other computers.");
+            }
             
             // Subscribe to events
             videoPlayer.prepareCompleted += OnVideoPrepared;
