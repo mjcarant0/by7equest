@@ -2,16 +2,32 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
 
-public class ClosingSceneController : MonoBehaviour
+/// <summary>
+/// Controls the opening scene video playback.
+/// Uses URL mode for WebGL compatibility.
+/// </summary>
+public class OpeningVideoController : MonoBehaviour
 {
     [Header("Video")]
     public VideoPlayer videoPlayer;
-    public string videoFileName = "closing-scene.mp4";
-    public string nextSceneName = "NameInput";
+    public string videoFileName = "opening-scene.mp4";
+    
+    [Header("Scene Flow")]
+    public string nextSceneName = "ModeDisplay";
 
     private void Start()
     {
-        Debug.Log("[ClosingScene] Closing scene started - playing video");
+        Debug.Log("[OpeningVideo] Opening video scene started");
+
+        // Ensure next minigame is determined
+        if (MinigameRandomizer.Instance == null)
+        {
+            GameObject temp = new GameObject("MinigameRandomizer");
+            temp.AddComponent<MinigameRandomizer>();
+        }
+
+        string nextMinigame = MinigameRandomizer.Instance.GetNextMinigameName();
+        Debug.Log($"[OpeningVideo] Next minigame will be: {nextMinigame}");
 
         if (videoPlayer != null)
         {
@@ -25,12 +41,6 @@ public class ClosingSceneController : MonoBehaviour
             string videoPath = System.IO.Path.Combine(Application.streamingAssetsPath, videoFileName);
             videoPlayer.url = videoPath;
             
-            // Validate that we're not using a hardcoded absolute path
-            if (videoPath.Contains(":") && !videoPath.StartsWith("http"))
-            {
-                Debug.LogWarning($"[ClosingScene] Detected absolute path: {videoPath}. This may cause issues on other computers.");
-            }
-            
             // Subscribe to events
             videoPlayer.prepareCompleted += OnVideoPrepared;
             videoPlayer.loopPointReached += OnVideoFinished;
@@ -39,27 +49,27 @@ public class ClosingSceneController : MonoBehaviour
             // Prepare the video
             videoPlayer.Prepare();
             
-            Debug.Log($"[ClosingScene] Video player initialized with URL: {videoPath}");
+            Debug.Log($"[OpeningVideo] Video player initialized with URL: {videoPath}");
             
             // Fallback: if video doesn't play after 8 seconds, skip to next scene
             Invoke(nameof(FallbackSkip), 8f);
         }
         else
         {
-            Debug.LogError("[ClosingScene] VideoPlayer not assigned! Skipping to next scene.");
+            Debug.LogError("[OpeningVideo] VideoPlayer not assigned! Skipping to next scene.");
             Invoke(nameof(LoadNextScene), 0.5f);
         }
     }
 
     private void OnVideoPrepared(VideoPlayer vp)
     {
-        Debug.Log("[ClosingScene] Video prepared, starting playback");
+        Debug.Log("[OpeningVideo] Video prepared, starting playback");
         vp.Play();
     }
 
     private void OnVideoError(VideoPlayer vp, string message)
     {
-        Debug.LogError($"[ClosingScene] Video error: {message}");
+        Debug.LogError($"[OpeningVideo] Video error: {message}");
         LoadNextScene();
     }
 
@@ -67,7 +77,7 @@ public class ClosingSceneController : MonoBehaviour
     {
         if (videoPlayer != null && !videoPlayer.isPlaying)
         {
-            Debug.LogWarning("[ClosingScene] Video didn't play, skipping to next scene");
+            Debug.LogWarning("[OpeningVideo] Video didn't play, skipping to next scene");
             LoadNextScene();
         }
     }
@@ -75,20 +85,12 @@ public class ClosingSceneController : MonoBehaviour
     private void LoadNextScene()
     {
         CancelInvoke(nameof(FallbackSkip));
-        
-        if (GameModeManager.Instance != null)
-        {
-            SceneManager.LoadScene(GameModeManager.Instance.nameInputScene);
-        }
-        else
-        {
-            SceneManager.LoadScene(nextSceneName);
-        }
+        SceneManager.LoadScene(nextSceneName);
     }
 
     private void OnVideoFinished(VideoPlayer vp)
     {
-        Debug.Log("[ClosingScene] Video finished, loading next scene");
+        Debug.Log("[OpeningVideo] Video finished, loading next scene");
         LoadNextScene();
     }
 

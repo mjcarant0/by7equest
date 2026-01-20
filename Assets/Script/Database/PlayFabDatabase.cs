@@ -21,6 +21,8 @@ public class PlayFabDatabase : MonoBehaviour
 
     // Connection state
     private System.Action connectionSuccessCallback = null;
+    private bool isLoginInProgress = false;
+    private List<System.Action> pendingConnectionCallbacks = new List<System.Action>();
 
     private void Awake()
     {
@@ -61,7 +63,18 @@ public class PlayFabDatabase : MonoBehaviour
         // Reset connection state before fresh login to avoid stale cached state
         isConnected = false;
         connectionSuccessCallback = onSuccess;
+        if (onSuccess != null)
+        {
+            pendingConnectionCallbacks.Add(onSuccess);
+        }
         LogDebug("[PlayFabDatabase] Resetting connection state for fresh login...");
+        
+        // If a login is already in progress (common in WebGL iframe), just queue the callback and wait
+        if (isLoginInProgress)
+        {
+            LogDebug("[PlayFabDatabase] Login already in progress; queued callback");
+            return;
+        }
         
         // Prefer Title ID from inspector override, then secrets file, else existing settings
         if (!string.IsNullOrWhiteSpace(titleId))
@@ -91,6 +104,11 @@ public class PlayFabDatabase : MonoBehaviour
         
         LogDebug($"[PlayFabDatabase] Connecting with name: {playerName}");
         
+        // On WebGL, clear any stale auth to avoid session confusion inside itch.io iframe
+        #if UNITY_WEBGL
+        try { PlayFabClientAPI.ForgetAllCredentials(); LogDebug("[PlayFabDatabase] WebGL: cleared credentials before login"); } catch {}
+        #endif
+        
         var request = new LoginWithCustomIDRequest
         {
             CustomId = uniqueId,
@@ -98,30 +116,42 @@ public class PlayFabDatabase : MonoBehaviour
         };
 
         LogDebug("[PlayFabDatabase] Connecting to database...");
-        
+        isLoginInProgress = true;
         PlayFabClientAPI.LoginWithCustomID(request, OnConnectSuccess, OnConnectFailure);
     }
 
     private void OnConnectSuccess(LoginResult result)
     {
         isConnected = true;
+        isLoginInProgress = false;
         LogDebug($"[PlayFabDatabase] Connected! ID: {result.PlayFabId}");
         
-        // Invoke success callback immediately (before next frame) to prevent coroutine death
+        // Ensure the single callback is included in queued callbacks, then invoke all
         if (connectionSuccessCallback != null)
         {
-            LogDebug("[PlayFabDatabase] Invoking connection success callback...");
-            connectionSuccessCallback.Invoke();
+            pendingConnectionCallbacks.Add(connectionSuccessCallback);
             connectionSuccessCallback = null;
+        }
+        if (pendingConnectionCallbacks.Count > 0)
+        {
+            LogDebug($"[PlayFabDatabase] Invoking {pendingConnectionCallbacks.Count} queued success callback(s)...");
+            var callbacks = new List<System.Action>(pendingConnectionCallbacks);
+            pendingConnectionCallbacks.Clear();
+            foreach (var cb in callbacks)
+            {
+                try { cb?.Invoke(); } catch (Exception ex) { Debug.LogError($"[PlayFabDatabase] Callback threw: {ex.Message}"); }
+            }
         }
     }
 
     private void OnConnectFailure(PlayFabError error)
     {
         isConnected = false;
+        isLoginInProgress = false;
         Debug.LogError($"[PlayFabDatabase] Connection failed: {error.GenerateErrorReport()}");
         Debug.LogError($"[PlayFabDatabase] Error: {error.ErrorMessage}");
         Debug.LogError($"[PlayFabDatabase] Title ID used: {PlayFabSettings.TitleId}");
+        pendingConnectionCallbacks.Clear();
         
         // If 409 conflict, try with a random ID
         if (error.HttpCode == 409)
@@ -142,14 +172,17 @@ public class PlayFabDatabase : MonoBehaviour
         };
         
         LogDebug($"[PlayFabDatabase] Retrying connection with random ID...");
+        isLoginInProgress = true;
         PlayFabClientAPI.LoginWithCustomID(request, OnConnectSuccess, OnRetryFailure);
     }
     
     private void OnRetryFailure(PlayFabError error)
     {
         isConnected = false;
+        isLoginInProgress = false;
         Debug.LogError($"[PlayFabDatabase] Retry also failed: {error.GenerateErrorReport()}");
         Debug.LogError($"[PlayFabDatabase] Please check your Title ID in PlayFab Dashboard");
+        pendingConnectionCallbacks.Clear();
     }
 
     #endregion
